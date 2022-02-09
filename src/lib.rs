@@ -1,8 +1,5 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
+//! A hassle-free, single-responsibility HTTP server used to easily expose metrics in your application.
+
+mod server;
+
+pub use server::MetricsServer;

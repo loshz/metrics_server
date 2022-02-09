@@ -5,7 +5,7 @@
 [![Documentation](https://docs.rs/tiny-metrics/badge.svg)](https://docs.rs/tiny-metrics)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/syscll/tiny-metrics/blob/main/LICENSE)
 
-This library provides a hassle-free, single-responsibility HTTP server used to easily expose metrics.
+This library provides a hassle-free, single-responsibility HTTP server used to easily expose metrics in your application.
 
 ## Usage
 
