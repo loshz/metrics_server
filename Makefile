@@ -1,3 +1,5 @@
+PUBLISH_FLAGS ?= --dry-run
+
 .PHONY: install-rust-tools
 install-rust-tools:
 	rustup update
@@ -16,4 +18,6 @@ test:
 
 .PHONY: publish
 publish:
-	cargo publish
+	# https://doc.rust-lang.org/cargo/reference/publishing.html
+	cargo package --list
+	cargo publish ${PUBLISH_FLAGS}

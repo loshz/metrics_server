@@ -10,6 +10,7 @@ homepage = "https://github.com/syscll/tiny-metrics"
 repository = "https://github.com/syscll/tiny-metrics"
 license = "MIT"
 keywords = ["http", "prometheus", "metrics"]
+categories = ["web-programming::http-server"]
 include = ["src/**/*", "tests", "LICENSE", "README.md"]
 
 [dependencies]
