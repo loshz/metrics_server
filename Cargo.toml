@@ -1,13 +1,13 @@
 [package]
-name = "tiny-metrics"
+name = "metrics-server"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.58"
 description = "A single responsibility HTTP metrics server."
-documentation = "https://docs.rs/tiny-metrics"
+documentation = "https://docs.rs/metrics-server"
 readme = "README.md"
-homepage = "https://github.com/syscll/tiny-metrics"
-repository = "https://github.com/syscll/tiny-metrics"
+homepage = "https://github.com/syscll/metrics-server"
+repository = "https://github.com/syscll/metrics-server"
 license = "MIT"
 keywords = ["http", "prometheus", "metrics"]
 categories = ["web-programming::http-server"]
