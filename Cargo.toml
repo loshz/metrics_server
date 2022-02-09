@@ -1,0 +1,16 @@
+[package]
+name = "tiny-metrics"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.58"
+description = "A single responsibility HTTP metrics server."
+documentation = "https://docs.rs/tiny-metrics"
+readme = "README.md"
+homepage = "https://github.com/syscll/tiny-metrics"
+repository = "https://github.com/syscll/tiny-metrics"
+license = "MIT"
+keywords = ["http", "prometheus", "metrics"]
+include = ["src/**/*", "tests", "LICENSE", "README.md"]
+
+[dependencies]
+tiny_http = "0.10"
