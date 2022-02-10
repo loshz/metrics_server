@@ -5,7 +5,9 @@
 [![Documentation](https://docs.rs/metrics-server/badge.svg)](https://docs.rs/metrics-server)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/syscll/metrics-server/blob/main/LICENSE)
 
-This library provides a hassle-free, single-responsibility HTTP server used to easily expose metrics in your application.
+A hassle-free, single-responsibility, safe HTTP server used to easily expose metrics in your application.
+
+_**Note: this library is NOT production ready! Use with caution and submit bugs where possible.**_
 
 ## Usage
 
