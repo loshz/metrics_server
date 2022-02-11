@@ -9,16 +9,11 @@ pub struct MetricsServer(Arc<Mutex<Vec<u8>>>);
 
 impl Write for MetricsServer {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        // TODO: this seems like a hack.
-        // Ideally, I want to lock before the loop and unlock afterwards.
-        for b in buf.iter() {
-            (*self.0.lock().unwrap()).push(*b);
-        }
+        (*self.0.lock().unwrap()).extend_from_slice(buf);
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        (*self.0.lock().unwrap()).clear();
         Ok(())
     }
 }
@@ -72,11 +67,15 @@ impl MetricsServer {
                         continue;
                     }
 
-                    // Write the Prometheus metrics.
-                    let res = Response::from_data("");
+                    // Write the metrics to the response buffer.
+                    let metrics = &mut (*self.0.lock().unwrap());
+                    let res = Response::from_data(metrics.as_slice());
                     if let Err(e) = req.respond(res) {
                         eprintln!("{}", e);
                     };
+
+                    // TODO: Clear the metrics buffer. Do we actually need to do this?
+                    let _ = metrics.flush();
                 }
             }
         });
