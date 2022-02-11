@@ -1,4 +1,3 @@
-use std::io::{self, Write};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
@@ -6,17 +5,6 @@ use tiny_http::{Method, Response, Server};
 
 #[derive(Clone)]
 pub struct MetricsServer(Arc<Mutex<Vec<u8>>>);
-
-impl Write for MetricsServer {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        (*self.0.lock().unwrap()).extend_from_slice(buf);
-        Ok(buf.len())
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
-}
 
 impl Default for MetricsServer {
     fn default() -> Self {
@@ -29,11 +17,17 @@ impl MetricsServer {
         MetricsServer(Arc::new(Mutex::new(Vec::new())))
     }
 
+    pub fn update(&self, data: Vec<u8>) {
+        let mut lock = self.0.lock().unwrap();
+        *lock = data;
+    }
+
     /// Starts a simple HTTP server on a new thread at the given address and expose the stored metrics.
     /// This server is intended to only be queried synchronously as it blocks upon receiving
     /// each request.
     pub fn serve(self, addr: &str) {
         let server = Server::http(addr).unwrap();
+        let buf = Arc::clone(&self.0);
 
         // Handle requests in a new thread so we can process in the background.
         thread::spawn({
@@ -48,7 +42,7 @@ impl MetricsServer {
                         }
                     };
 
-                    // Only reponsd to GET requests(?).
+                    // Only respond to GET requests(?).
                     if req.method() != &Method::Get {
                         let res = Response::empty(405);
                         if let Err(e) = req.respond(res) {
@@ -68,14 +62,11 @@ impl MetricsServer {
                     }
 
                     // Write the metrics to the response buffer.
-                    let metrics = &mut (*self.0.lock().unwrap());
+                    let metrics = buf.lock().unwrap();
                     let res = Response::from_data(metrics.as_slice());
                     if let Err(e) = req.respond(res) {
                         eprintln!("{}", e);
                     };
-
-                    // TODO: Clear the metrics buffer. Do we actually need to do this?
-                    let _ = metrics.flush();
                 }
             }
         });
