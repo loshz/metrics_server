@@ -18,14 +18,14 @@ impl MetricsServer {
     }
 
     pub fn update(&self, data: Vec<u8>) {
-        let mut lock = self.0.lock().unwrap();
-        *lock = data;
+        let mut buf = self.0.lock().unwrap();
+        *buf = data;
     }
 
     /// Starts a simple HTTP server on a new thread at the given address and expose the stored metrics.
     /// This server is intended to only be queried synchronously as it blocks upon receiving
     /// each request.
-    pub fn serve(self, addr: &str) {
+    pub fn serve(&self, addr: &str) {
         let server = Server::http(addr).unwrap();
         let buf = Arc::clone(&self.0);
 
