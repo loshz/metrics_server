@@ -30,6 +30,7 @@ let bytes = server.update(Vec::from([1, 2, 3, 4]));
 assert_eq!(bytes, 4);
 ```
 
-## TOOD
+## TODO
 - [ ] Add integration tests.
 - [ ] Add Prometheus examples.
+- [ ] Better URL matching.
