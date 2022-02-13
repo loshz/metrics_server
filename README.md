@@ -1,9 +1,9 @@
 # Metrics Server
 
-[![CI](https://github.com/syscll/metrics-server/actions/workflows/ci.yml/badge.svg)](https://github.com/syscll/metrics-server/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/crates/v/metrics-server.svg)](https://crates.io/crates/metrics-server)
-[![Docs](https://docs.rs/metrics-server/badge.svg)](https://docs.rs/metrics-server)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/syscll/metrics-server/blob/main/LICENSE)
+[![CI](https://github.com/syscll/metrics_server/actions/workflows/ci.yml/badge.svg)](https://github.com/syscll/metrics_server/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/crates/v/metrics_server.svg)](https://crates.io/crates/metrics_server)
+[![Docs](https://docs.rs/metrics_server/badge.svg)](https://docs.rs/metrics_server)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/syscll/metrics_server/blob/main/LICENSE)
 
 A hassle-free, single-responsibility, safe HTTP server used to easily expose metrics in your application.
 
