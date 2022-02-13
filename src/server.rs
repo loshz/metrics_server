@@ -3,6 +3,7 @@ use std::thread;
 
 use tiny_http::{Method, Response, Server};
 
+/// A thread-safe growable array.
 #[derive(Clone)]
 pub struct MetricsServer(Arc<Mutex<Vec<u8>>>);
 
@@ -13,10 +14,34 @@ impl Default for MetricsServer {
 }
 
 impl MetricsServer {
+    /// Creates a new empty `MetricsServer`.
+    ///
+    /// This will create a mutex protected empty Vector. It will not allocate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use metrics_server::MetricsServer;
+    ///
+    /// let server = MetricsServer::new();
+    /// ```
     pub fn new() -> Self {
         MetricsServer(Arc::new(Mutex::new(Vec::new())))
     }
 
+    /// Safely updates the data in a `MetricsServer`.
+    ///
+    /// This function is thread safe and protected by a mutex. It is safe
+    /// to call concurrently from multiple threads.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use metrics_server::MetricsServer;
+    ///
+    /// let server = MetricsServer::new();
+    /// server.update(vec!([1, 2, 3, 4]));
+    /// ```
     pub fn update(&self, data: Vec<u8>) {
         let mut buf = self.0.lock().unwrap();
         *buf = data;
@@ -25,8 +50,21 @@ impl MetricsServer {
     /// Starts a simple HTTP server on a new thread at the given address and expose the stored metrics.
     /// This server is intended to only be queried synchronously as it blocks upon receiving
     /// each request.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use metrics_server::MetricsServer;
+    ///
+    /// let server = MetricsServer::new();
+    /// server.serve("localhost:8001");
+    /// ```
     pub fn serve(&self, addr: &str) {
+        // Create a new HTTP server and bind to the given address.
         let server = Server::http(addr).unwrap();
+
+        // Invoking clone on Arc produces a new Arc instance, which points to the
+        // same allocation on the heap as the source Arc, while increasing a reference count.
         let buf = Arc::clone(&self.0);
 
         // Handle requests in a new thread so we can process in the background.

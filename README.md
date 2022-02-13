@@ -14,5 +14,5 @@ _**Note: this library is NOT production ready! Use with caution and submit bugs 
 Include the lib in your `Cargo.toml` dependencies:
 ```toml
 [dependencies]
-metrics-server = "0.1"
+metrics_server = "0.1"
 ```
