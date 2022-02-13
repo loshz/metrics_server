@@ -29,7 +29,8 @@ impl MetricsServer {
         MetricsServer(Arc::new(Mutex::new(Vec::new())))
     }
 
-    /// Safely updates the data in a `MetricsServer`.
+    /// Safely updates the data in a `MetricsServer` and returns the number of
+    /// bytes written.
     ///
     /// This function is thread safe and protected by a mutex. It is safe
     /// to call concurrently from multiple threads.
@@ -40,11 +41,13 @@ impl MetricsServer {
     /// use metrics_server::MetricsServer;
     ///
     /// let server = MetricsServer::new();
-    /// server.update(vec!([1, 2, 3, 4]));
+    /// let bytes = server.update(Vec::from([1, 2, 3, 4]));
+    /// assert_eq!(bytes, 4);
     /// ```
-    pub fn update(&self, data: Vec<u8>) {
+    pub fn update(&self, data: Vec<u8>) -> usize {
         let mut buf = self.0.lock().unwrap();
         *buf = data;
+        buf.as_slice().len()
     }
 
     /// Starts a simple HTTP server on a new thread at the given address and expose the stored metrics.
@@ -59,6 +62,10 @@ impl MetricsServer {
     /// let server = MetricsServer::new();
     /// server.serve("localhost:8001");
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if given an invalid address.
     pub fn serve(&self, addr: &str) {
         // Create a new HTTP server and bind to the given address.
         let server = Server::http(addr).unwrap();
