@@ -1,6 +1,6 @@
 [package]
 name = "metrics_server"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Dan Bond <danbond@protonmail.com>"]
 edition = "2021"
 rust-version = "1.58"
@@ -12,7 +12,10 @@ repository = "https://github.com/loshz/metrics_server"
 license = "MIT"
 keywords = ["http", "prometheus", "metrics"]
 categories = ["web-programming::http-server"]
-include = ["src/**/*", "tests", "LICENSE", "README.md"]
+include = ["src/**/*", "tests", "examples", "LICENSE", "README.md"]
 
 [dependencies]
 tiny_http = "0.10"
+
+[dev-dependencies]
+prometheus-client = "0.15"

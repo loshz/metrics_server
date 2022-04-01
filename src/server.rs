@@ -96,7 +96,6 @@ impl MetricsServer {
                         continue;
                     }
 
-                    // TODO: this is naive. Fix it(?)
                     // Only serve the /metrics path.
                     if req.url() != "/metrics" {
                         let res = Response::empty(404);
