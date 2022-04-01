@@ -87,7 +87,7 @@ impl MetricsServer {
                         }
                     };
 
-                    // Only respond to GET requests(?).
+                    // Only respond to GET requests.
                     if req.method() != &Method::Get {
                         let res = Response::empty(405);
                         if let Err(e) = req.respond(res) {
