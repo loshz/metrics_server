@@ -3,13 +3,13 @@ use metrics_server::MetricsServer;
 #[test]
 #[should_panic]
 fn test_server_invalid_address() {
-    let server = MetricsServer::new();
+    let mut server = MetricsServer::new();
     server.serve("invalid:99999999");
 }
 
 #[test]
 fn test_server_serve() {
-    let server = MetricsServer::new();
+    let mut server = MetricsServer::new();
     server.serve("localhost:8001");
 
     for i in 0..3 {

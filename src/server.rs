@@ -3,9 +3,11 @@ use std::thread;
 
 use tiny_http::{Method, Response, Server};
 
-/// A thread-safe growable array.
-#[derive(Clone)]
-pub struct MetricsServer(Arc<Mutex<Vec<u8>>>);
+/// A thread-safe datastore for serving metrics via a HTTP server.
+pub struct MetricsServer {
+    data: Arc<Mutex<Vec<u8>>>,
+    thread: Option<thread::JoinHandle<()>>,
+}
 
 impl Default for MetricsServer {
     fn default() -> Self {
@@ -26,7 +28,10 @@ impl MetricsServer {
     /// let server = MetricsServer::new();
     /// ```
     pub fn new() -> Self {
-        MetricsServer(Arc::new(Mutex::new(Vec::new())))
+        MetricsServer {
+            data: Arc::new(Mutex::new(Vec::new())),
+            thread: None,
+        }
     }
 
     /// Safely updates the data in a `MetricsServer` and returns the number of
@@ -40,12 +45,12 @@ impl MetricsServer {
     /// ```
     /// use metrics_server::MetricsServer;
     ///
-    /// let server = MetricsServer::new();
+    /// let mut server = MetricsServer::new();
     /// let bytes = server.update(Vec::from([1, 2, 3, 4]));
     /// assert_eq!(bytes, 4);
     /// ```
     pub fn update(&self, data: Vec<u8>) -> usize {
-        let mut buf = self.0.lock().unwrap();
+        let mut buf = self.data.lock().unwrap();
         *buf = data;
         buf.as_slice().len()
     }
@@ -59,26 +64,27 @@ impl MetricsServer {
     /// ```
     /// use metrics_server::MetricsServer;
     ///
-    /// let server = MetricsServer::new();
+    /// let mut server = MetricsServer::new();
     /// server.serve("localhost:8001");
     /// ```
     ///
     /// # Panics
     ///
     /// Panics if given an invalid address.
-    pub fn serve(&self, addr: &str) {
+    pub fn serve(&mut self, addr: &str) {
         // Create a new HTTP server and bind to the given address.
         let server = Server::http(addr).unwrap();
 
         // Invoking clone on Arc produces a new Arc instance, which points to the
         // same allocation on the heap as the source Arc, while increasing a reference count.
-        let buf = Arc::clone(&self.0);
+        let buf = Arc::clone(&self.data);
 
         // Handle requests in a new thread so we can process in the background.
-        thread::spawn({
+        let thread = thread::spawn({
             move || {
                 loop {
                     // Blocks until the next request is received.
+                    // TODO: consider using recv_timeout().
                     let req = match server.recv() {
                         Ok(req) => req,
                         Err(e) => {
@@ -114,5 +120,18 @@ impl MetricsServer {
                 }
             }
         });
+
+        self.thread = Some(thread);
+    }
+}
+
+impl Drop for MetricsServer {
+    fn drop(&mut self) {
+        // Because join takes ownership of the thread, we need call the take method
+        // on the Option to move the value out of the Some variant and leave a None
+        // variant in its place.
+        if let Some(thread) = self.thread.take() {
+            thread.join().unwrap();
+        }
     }
 }

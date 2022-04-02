@@ -13,7 +13,7 @@
 //! use metrics_server::MetricsServer;
 //!
 //! // Create a new server and start it in the background.
-//! let server = MetricsServer::new();
+//! let mut server = MetricsServer::new();
 //! server.serve("localhost:8001");
 //!
 //! // Publish you application metrics periodically.
