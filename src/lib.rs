@@ -18,7 +18,7 @@
 //!
 //! // Publish you application metrics periodically.
 //! let bytes = server.update(Vec::from([1, 2, 3, 4]));
-//! assert_eq!(bytes, 4);
+//! assert_eq!(4, bytes);
 //! ```
 mod server;
 

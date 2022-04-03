@@ -1,4 +1,4 @@
-# Metrics Server
+# metrics_server
 [![CI](https://github.com/loshz/metrics_server/actions/workflows/ci.yml/badge.svg)](https://github.com/loshz/metrics_server/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/crates/v/metrics_server.svg)](https://crates.io/crates/metrics_server)
 [![Docs](https://docs.rs/metrics_server/badge.svg)](https://docs.rs/metrics_server)
