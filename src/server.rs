@@ -82,22 +82,12 @@ impl MetricsServer {
         // Handle requests in a new thread so we can process in the background.
         let thread = thread::spawn({
             move || {
-                loop {
-                    // Blocks until the next request is received.
-                    // TODO: consider using recv_timeout().
-                    let req = match server.recv() {
-                        Ok(req) => req,
-                        Err(e) => {
-                            eprintln!("error: {}", e);
-                            continue;
-                        }
-                    };
-
+                for req in server.incoming_requests() {
                     // Only respond to GET requests.
                     if req.method() != &Method::Get {
                         let res = Response::empty(405);
                         if let Err(e) = req.respond(res) {
-                            eprintln!("{}", e);
+                            eprintln!("metrics_server error: {}", e);
                         };
                         continue;
                     }
@@ -106,7 +96,7 @@ impl MetricsServer {
                     if req.url() != "/metrics" {
                         let res = Response::empty(404);
                         if let Err(e) = req.respond(res) {
-                            eprintln!("{}", e);
+                            eprintln!("metrics_server error: {}", e);
                         };
                         continue;
                     }
@@ -115,7 +105,7 @@ impl MetricsServer {
                     let metrics = buf.lock().unwrap();
                     let res = Response::from_data(metrics.as_slice());
                     if let Err(e) = req.respond(res) {
-                        eprintln!("{}", e);
+                        eprintln!("metrics_server error: {}", e);
                     };
                 }
             }
