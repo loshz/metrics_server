@@ -11,7 +11,7 @@ A hassle-free, single-responsibility, safe HTTP server used to easily expose met
 Include the lib in your `Cargo.toml` dependencies:
 ```toml
 [dependencies]
-metrics_server = "0.2"
+metrics_server = "0.3"
 ```
 
 In your application:
