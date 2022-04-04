@@ -109,7 +109,7 @@ impl Drop for MetricsServer {
     // so maybe a shutdown method would be better?
     fn drop(&mut self) {
         // Signal that we should stop handling requests and unblock the server.
-        self.shared.stop.swap(true, Ordering::Relaxed);
+        self.shared.stop.store(true, Ordering::Relaxed);
         self.shared.server.unblock();
 
         // Because join takes ownership of the thread, we need call the take method
