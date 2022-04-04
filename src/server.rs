@@ -86,34 +86,40 @@ impl MetricsServer {
         // Handle requests in a new thread so we can process in the background.
         self.thread = Some(thread::spawn({
             move || {
-                // Blocks until the next request is received.
-                for req in server.incoming_requests() {
+                loop {
                     // Check to see if we should stop handling requests.
                     if stop.load(Ordering::Relaxed) {
-                        server.unblock();
                         break;
                     }
 
-                    // Only respond to GET requests.
-                    if req.method() != &Method::Get {
-                        let res = Response::empty(405);
-                        let _ = req.respond(res);
-                        continue;
-                    }
-
-                    // Only serve the /metrics path.
-                    if req.url() != "/metrics" {
-                        let res = Response::empty(404);
-                        let _ = req.respond(res);
-                        continue;
-                    }
-
-                    // Write the metrics to the response buffer.
-                    let metrics = buf.lock().unwrap();
-                    let res = Response::from_data(metrics.as_slice());
-                    if let Err(e) = req.respond(res) {
-                        eprintln!("metrics_server error: {}", e);
+                    // Don't block when receiving requests.
+                    let recv = match server.try_recv() {
+                        Ok(r) => r,
+                        Err(_) => continue,
                     };
+
+                    if let Some(req) = recv {
+                        // Only respond to GET requests.
+                        if req.method() != &Method::Get {
+                            let res = Response::empty(405);
+                            let _ = req.respond(res);
+                            continue;
+                        }
+
+                        // Only serve the /metrics path.
+                        if req.url() != "/metrics" {
+                            let res = Response::empty(404);
+                            let _ = req.respond(res);
+                            continue;
+                        }
+
+                        // Write the metrics to the response buffer.
+                        let metrics = buf.lock().unwrap();
+                        let res = Response::from_data(metrics.as_slice());
+                        if let Err(e) = req.respond(res) {
+                            eprintln!("metrics_server error: {}", e);
+                        };
+                    }
                 }
             }
         }));
@@ -125,7 +131,7 @@ impl Drop for MetricsServer {
     // so maybe a shutdown method would be better?
     fn drop(&mut self) {
         // Signal that we should stop handling requests.
-        self.stop.swap(true, Ordering::Relaxed);
+        self.stop.store(true, Ordering::Relaxed);
 
         // Because join takes ownership of the thread, we need call the take method
         // on the Option to move the value out of the Some variant and leave a None
