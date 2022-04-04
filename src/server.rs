@@ -87,6 +87,7 @@ impl MetricsServer {
         // Handle requests in a new thread so we can process in the background.
         let thread = thread::spawn({
             move || {
+                // Blocks until the next request is received.
                 for req in server.incoming_requests() {
                     // Check to see if we should stop handling requests.
                     if stop.load(Ordering::Relaxed) {
