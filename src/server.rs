@@ -6,11 +6,11 @@ use tiny_http::{Method, Response, Server};
 
 /// A thread-safe datastore for serving metrics via a HTTP server.
 pub struct MetricsServer {
-    fields: Arc<Fields>,
+    shared: Arc<MetricsServerShared>,
     thread: Option<thread::JoinHandle<()>>,
 }
 
-struct Fields {
+struct MetricsServerShared {
     data: Mutex<Vec<u8>>,
     server: Server,
     stop: AtomicBool,
@@ -35,21 +35,23 @@ impl MetricsServer {
     ///
     /// Panics if given an invalid address.
     pub fn new(addr: &str) -> Self {
-        let fields = Arc::new(Fields {
+        let shared = Arc::new(MetricsServerShared {
             data: Mutex::new(Vec::new()),
             server: Server::http(addr).unwrap(),
             stop: AtomicBool::new(false),
         });
 
-        let f = Arc::clone(&fields);
+        // Invoking clone on Arc produces a new Arc instance, which points to the
+        // same allocation on the heap as the source Arc, while increasing a reference count.
+        let s = Arc::clone(&shared);
 
         // Handle requests in a new thread so we can process in the background.
         let thread = Some(thread::spawn({
             move || {
                 // Blocks until the next request is received.
-                for req in f.server.incoming_requests() {
+                for req in s.server.incoming_requests() {
                     // Check to see if we should stop handling requests.
-                    if f.stop.load(Ordering::Relaxed) {
+                    if s.stop.load(Ordering::Relaxed) {
                         break;
                     }
 
@@ -68,7 +70,7 @@ impl MetricsServer {
                     }
 
                     // Write the metrics to the response buffer.
-                    let metrics = f.data.lock().unwrap();
+                    let metrics = s.data.lock().unwrap();
                     let res = Response::from_data(metrics.as_slice());
                     if let Err(e) = req.respond(res) {
                         eprintln!("metrics_server error: {}", e);
@@ -77,7 +79,7 @@ impl MetricsServer {
             }
         }));
 
-        MetricsServer { fields, thread }
+        MetricsServer { shared, thread }
     }
 
     /// Safely updates the data in a `MetricsServer` and returns the number of
@@ -96,7 +98,7 @@ impl MetricsServer {
     /// assert_eq!(4, bytes);
     /// ```
     pub fn update(&self, data: Vec<u8>) -> usize {
-        let mut buf = self.fields.data.lock().unwrap();
+        let mut buf = self.shared.data.lock().unwrap();
         *buf = data;
         buf.as_slice().len()
     }
@@ -107,8 +109,8 @@ impl Drop for MetricsServer {
     // so maybe a shutdown method would be better?
     fn drop(&mut self) {
         // Signal that we should stop handling requests and unblock the server.
-        self.fields.stop.swap(true, Ordering::Relaxed);
-        self.fields.server.unblock();
+        self.shared.stop.swap(true, Ordering::Relaxed);
+        self.shared.server.unblock();
 
         // Because join takes ownership of the thread, we need call the take method
         // on the Option to move the value out of the Some variant and leave a None
