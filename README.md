@@ -21,7 +21,7 @@ In your application:
 use metrics_server::MetricsServer;
 
 // Create a new server and start it in the background.
-let mut server = MetricsServer::new("localhost:8001");
+let server = MetricsServer::new("localhost:8001");
 
 // Publish you application metrics periodically.
 let bytes = server.update(Vec::from([1, 2, 3, 4]));
