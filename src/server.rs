@@ -7,6 +7,7 @@ use tiny_http::{Method, Response, Server};
 /// A thread-safe datastore for serving metrics via a HTTP server.
 pub struct MetricsServer {
     data: Arc<Mutex<Vec<u8>>>,
+    server: Arc<Server>,
     stop: Arc<AtomicBool>,
     thread: Option<thread::JoinHandle<()>>,
 }
@@ -32,6 +33,7 @@ impl MetricsServer {
     pub fn new() -> Self {
         MetricsServer {
             data: Arc::new(Mutex::new(Vec::new())),
+            server: Arc::new(Server::http("localhost:8001").unwrap()),
             stop: Arc::new(AtomicBool::new(false)),
             thread: None,
         }
@@ -74,52 +76,46 @@ impl MetricsServer {
     /// # Panics
     ///
     /// Panics if given an invalid address.
-    pub fn serve(&mut self, addr: &str) {
+    pub fn serve(&mut self, _addr: &str) {
         // Create a new HTTP server and bind to the given address.
-        let server = Server::http(addr).unwrap();
+        //self.server = Some(Server::http(addr).unwrap());
 
         // Invoking clone on Arc produces a new Arc instance, which points to the
         // same allocation on the heap as the source Arc, while increasing a reference count.
         let buf = Arc::clone(&self.data);
+        let server = Arc::clone(&self.server);
         let stop = Arc::clone(&self.stop);
 
         // Handle requests in a new thread so we can process in the background.
         self.thread = Some(thread::spawn({
             move || {
-                loop {
+                // Blocks until the next request is received.
+                for req in server.incoming_requests() {
                     // Check to see if we should stop handling requests.
                     if stop.load(Ordering::Relaxed) {
                         break;
                     }
 
-                    // Don't block when receiving requests.
-                    let recv = match server.try_recv() {
-                        Ok(r) => r,
-                        Err(_) => continue,
-                    };
-
-                    if let Some(req) = recv {
-                        // Only respond to GET requests.
-                        if req.method() != &Method::Get {
-                            let res = Response::empty(405);
-                            let _ = req.respond(res);
-                            continue;
-                        }
-
-                        // Only serve the /metrics path.
-                        if req.url() != "/metrics" {
-                            let res = Response::empty(404);
-                            let _ = req.respond(res);
-                            continue;
-                        }
-
-                        // Write the metrics to the response buffer.
-                        let metrics = buf.lock().unwrap();
-                        let res = Response::from_data(metrics.as_slice());
-                        if let Err(e) = req.respond(res) {
-                            eprintln!("metrics_server error: {}", e);
-                        };
+                    // Only respond to GET requests.
+                    if req.method() != &Method::Get {
+                        let res = Response::empty(405);
+                        let _ = req.respond(res);
+                        continue;
                     }
+
+                    // Only serve the /metrics path.
+                    if req.url() != "/metrics" {
+                        let res = Response::empty(404);
+                        let _ = req.respond(res);
+                        continue;
+                    }
+
+                    // Write the metrics to the response buffer.
+                    let metrics = buf.lock().unwrap();
+                    let res = Response::from_data(metrics.as_slice());
+                    if let Err(e) = req.respond(res) {
+                        eprintln!("metrics_server error: {}", e);
+                    };
                 }
             }
         }));
@@ -130,8 +126,9 @@ impl Drop for MetricsServer {
     // TODO: should I really be doing this inside drop? It _could_ panic,
     // so maybe a shutdown method would be better?
     fn drop(&mut self) {
-        // Signal that we should stop handling requests.
-        self.stop.store(true, Ordering::Relaxed);
+        // Signal that we should stop handling requests and unblock the server.
+        self.stop.swap(true, Ordering::Relaxed);
+        self.server.unblock();
 
         // Because join takes ownership of the thread, we need call the take method
         // on the Option to move the value out of the Some variant and leave a None
