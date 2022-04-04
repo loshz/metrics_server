@@ -16,8 +16,7 @@ fn main() {
     registry.register("some_count", "Number of random counts", counter.clone());
 
     // Expose the Prometheus metrics.
-    let mut server = MetricsServer::new();
-    server.serve("localhost:8001");
+    let server = MetricsServer::new("localhost:8001");
 
     // Increment the counter every 5 seconds.
     loop {
@@ -30,7 +29,7 @@ fn main() {
         // Update the Metrics Server with the current encoded data.
         server.update(encoded);
 
-        let ten_secs = time::Duration::from_secs(5);
-        thread::sleep(ten_secs);
+        let five_secs = time::Duration::from_secs(5);
+        thread::sleep(five_secs);
     }
 }

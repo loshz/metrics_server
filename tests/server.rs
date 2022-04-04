@@ -3,14 +3,12 @@ use metrics_server::MetricsServer;
 #[test]
 #[should_panic]
 fn test_server_invalid_address() {
-    let mut server = MetricsServer::new();
-    server.serve("invalid:99999999");
+    let _ = MetricsServer::new("invalid:99999999");
 }
 
 #[test]
 fn test_server_serve() {
-    let mut server = MetricsServer::new();
-    server.serve("localhost:8001");
+    let server = MetricsServer::new("localhost:8001");
 
     for i in 0..3 {
         // Create mock data and update the metrics server.
