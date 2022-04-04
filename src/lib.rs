@@ -12,13 +12,12 @@
 //! ```
 //! use metrics_server::MetricsServer;
 //!
-//! // Create a new server and start it in the background.
-//! let server = MetricsServer::new();
-//! server.serve("localhost:8001");
+//! // Create a new server and start listening for requests in the background.
+//! let server = MetricsServer::new("localhost:8001");
 //!
-//! // Publish you application metrics periodically.
+//! // Publish your application metrics.
 //! let bytes = server.update(Vec::from([1, 2, 3, 4]));
-//! assert_eq!(bytes, 4);
+//! assert_eq!(4, bytes);
 //! ```
 mod server;
 
