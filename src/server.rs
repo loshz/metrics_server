@@ -82,7 +82,7 @@ impl MetricsServer {
         // same allocation on the heap as the source Arc, while increasing a reference count.
         let buf = Arc::clone(&self.data);
 
-        let stop = self.stop.clone();
+        let stop = Arc::clone(&self.stop);
 
         // Handle requests in a new thread so we can process in the background.
         let thread = thread::spawn({
@@ -123,6 +123,8 @@ impl MetricsServer {
 }
 
 impl Drop for MetricsServer {
+    // TODO: should I really be doing this inside drop? It _could_ panic,
+    // so maybe a shutdown method would be better?
     fn drop(&mut self) {
         // Signal that we should stop handling requests.
         self.stop.swap(true, Ordering::Relaxed);
