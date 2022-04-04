@@ -13,7 +13,6 @@
 //! use metrics_server::MetricsServer;
 //!
 //! // Create a new server and start listening for requests in the background.
-//!
 //! let server = MetricsServer::new("localhost:8001");
 //!
 //! // Publish you application metrics.

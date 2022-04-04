@@ -85,7 +85,7 @@ impl MetricsServer {
     /// Safely updates the data in a `MetricsServer` and returns the number of
     /// bytes written.
     ///
-    /// This function is thread safe and protected by a mutex. It is safe
+    /// This method is protected by a mutex making it safe
     /// to call concurrently from multiple threads.
     ///
     /// # Examples
