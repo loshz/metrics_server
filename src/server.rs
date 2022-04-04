@@ -81,11 +81,10 @@ impl MetricsServer {
         // Invoking clone on Arc produces a new Arc instance, which points to the
         // same allocation on the heap as the source Arc, while increasing a reference count.
         let buf = Arc::clone(&self.data);
-
         let stop = Arc::clone(&self.stop);
 
         // Handle requests in a new thread so we can process in the background.
-        let thread = thread::spawn({
+        self.thread = Some(thread::spawn({
             move || {
                 // Blocks until the next request is received.
                 for req in server.incoming_requests() {
@@ -117,9 +116,7 @@ impl MetricsServer {
                     };
                 }
             }
-        });
-
-        self.thread = Some(thread);
+        }));
     }
 }
 
