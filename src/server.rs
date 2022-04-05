@@ -4,7 +4,7 @@ use std::thread;
 
 use tiny_http::{Method, Response, Server};
 
-/// A thread-safe datastore for serving metrics via a HTTP server.
+/// A thread-safe datastore for serving metrics via a HTTP/S server.
 pub struct MetricsServer {
     shared: Arc<MetricsServerShared>,
     thread: Option<thread::JoinHandle<()>>,
@@ -17,27 +17,58 @@ struct MetricsServerShared {
 }
 
 impl MetricsServer {
-    /// Creates a new empty `MetricsServer`.
+    /// Creates an empty `MetricsServer` and starts a HTTP server on a new thread at the given address.
     ///
-    /// Starts a simple HTTP server on a new thread at the given address and expose the stored metrics.
     /// This server is intended to only be queried synchronously as it blocks upon receiving
     /// each request.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use metrics_server::MetricsServer;
-    ///
-    /// let server = MetricsServer::new("localhost:8001");
-    /// ```
     ///
     /// # Panics
     ///
     /// Panics if given an invalid address.
     pub fn new(addr: &str) -> Self {
+        let config = tiny_http::ServerConfig { addr, ssl: None };
+
+        MetricsServer::serve(config)
+    }
+
+    /// Creates an empty `MetricsServer` and starts a HTTPS server on a new thread at the given address.
+    ///
+    /// This server is intended to only be queried synchronously as it blocks upon receiving
+    /// each request.
+    ///
+    /// # Panics
+    ///
+    /// Panics if given an invalid address or incorrect TLS credentials.
+    pub fn https(addr: &str, certificate: Vec<u8>, private_key: Vec<u8>) -> Self {
+        let config = tiny_http::ServerConfig {
+            addr,
+            ssl: Some(tiny_http::SslConfig {
+                certificate,
+                private_key,
+            }),
+        };
+
+        MetricsServer::serve(config)
+    }
+
+    /// Safely updates the data in a `MetricsServer` and returns the number of bytes written.
+    ///
+    /// This method is protected by a mutex making it safe
+    /// to call concurrently from multiple threads.
+    pub fn update(&self, data: Vec<u8>) -> usize {
+        let mut buf = self.shared.data.lock().unwrap();
+        *buf = data;
+        buf.as_slice().len()
+    }
+
+    fn serve<A>(config: tiny_http::ServerConfig<A>) -> Self
+    where
+        A: std::net::ToSocketAddrs,
+    {
+        // Create an Arc of the shared data.
         let shared = Arc::new(MetricsServerShared {
             data: Mutex::new(Vec::new()),
-            server: Server::http(addr).unwrap(),
+            server: Server::new(config).unwrap(),
             stop: AtomicBool::new(false),
         });
 
@@ -80,27 +111,6 @@ impl MetricsServer {
         }));
 
         MetricsServer { shared, thread }
-    }
-
-    /// Safely updates the data in a `MetricsServer` and returns the number of
-    /// bytes written.
-    ///
-    /// This method is protected by a mutex making it safe
-    /// to call concurrently from multiple threads.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use metrics_server::MetricsServer;
-    ///
-    /// let server = MetricsServer::new("localhost:8001");
-    /// let bytes = server.update(Vec::from([1, 2, 3, 4]));
-    /// assert_eq!(4, bytes);
-    /// ```
-    pub fn update(&self, data: Vec<u8>) -> usize {
-        let mut buf = self.shared.data.lock().unwrap();
-        *buf = data;
-        buf.as_slice().len()
     }
 }
 

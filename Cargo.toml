@@ -15,7 +15,7 @@ categories = ["web-programming::http-server"]
 include = ["src/**/*", "tests", "examples", "LICENSE", "README.md"]
 
 [dependencies]
-tiny_http = "0.11"
+tiny_http = { version = "0.11", features = ["ssl-rustls"] }
 
 [dev-dependencies]
 prometheus-client = "0.15"
