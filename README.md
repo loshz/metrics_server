@@ -4,9 +4,12 @@
 [![Docs](https://docs.rs/metrics_server/badge.svg)](https://docs.rs/metrics_server)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/loshz/metrics_server/blob/main/LICENSE)
 
+>_Note: this lib is **NOT** stable. The API might change before v1.0_
+
 A hassle-free, single-responsibility, safe HTTP server used to easily expose metrics in an application.
 
 This crate provides a thread safe, minimalstic HTTP server used to buffer metrics and serve them via a standard `/metrics` endpoint. It's aim is to remove the boilerplate needed to create such simple mechanisms. It is currently somewhat oppinionated and naive in order to maintain little complexity.
+
 
 ## Usage
 
@@ -25,7 +28,7 @@ let server = MetricsServer::new("localhost:8001");
 
 // Publish you application metrics.
 let bytes = server.update(Vec::from([1, 2, 3, 4]));
-assert_eq!(bytes, 4);
+assert_eq!(4, bytes);
 ```
 
 For more comprehensive usage, see the included [examples](./examples).
