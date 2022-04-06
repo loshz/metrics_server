@@ -9,7 +9,7 @@
 //!
 //! # Examples
 //!
-//! ```
+//! ```rust
 //! use metrics_server::MetricsServer;
 //!
 //! // Create a new HTTP server and start listening for requests in the background.

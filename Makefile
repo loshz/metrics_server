@@ -21,3 +21,9 @@ publish:
 	# https://doc.rust-lang.org/cargo/reference/publishing.html
 	cargo package --list
 	cargo publish ${PUBLISH_FLAGS}
+
+.PHONY: gen-certs
+gen-certs:
+	mkdir -p ./tests/certs
+	openssl genpkey -algorithm Ed25519 -out ./tests/certs/private_key.pem
+	openssl req -x509 -key ./tests/certs/private_key.pem -out ./tests/certs/certificate.pem -sha256 -nodes -subj '/CN=localhost'

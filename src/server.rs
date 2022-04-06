@@ -1,3 +1,4 @@
+use std::net::ToSocketAddrs;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -19,13 +20,15 @@ struct MetricsServerShared {
 impl MetricsServer {
     /// Creates an empty `MetricsServer` and starts a HTTP server on a new thread at the given address.
     ///
-    /// This server is intended to only be queried synchronously as it blocks upon receiving
-    /// each request.
+    /// This server will only respond synchronously as it blocks until receiving new requests.
     ///
     /// # Panics
     ///
     /// Panics if given an invalid address.
-    pub fn new(addr: &str) -> Self {
+    pub fn new<A>(addr: A) -> Self
+    where
+        A: ToSocketAddrs,
+    {
         let config = tiny_http::ServerConfig { addr, ssl: None };
 
         MetricsServer::serve(config)
@@ -33,13 +36,17 @@ impl MetricsServer {
 
     /// Creates an empty `MetricsServer` and starts a HTTPS server on a new thread at the given address.
     ///
-    /// This server is intended to only be queried synchronously as it blocks upon receiving
-    /// each request.
+    /// This server will only respond synchronously as it blocks until receiving new requests.
+    ///
+    /// Note: there is currently no option to skip TLS cert verification.
     ///
     /// # Panics
     ///
     /// Panics if given an invalid address or incorrect TLS credentials.
-    pub fn https(addr: &str, certificate: Vec<u8>, private_key: Vec<u8>) -> Self {
+    pub fn https<A>(addr: A, certificate: Vec<u8>, private_key: Vec<u8>) -> Self
+    where
+        A: ToSocketAddrs,
+    {
         let config = tiny_http::ServerConfig {
             addr,
             ssl: Some(tiny_http::SslConfig {
@@ -63,7 +70,7 @@ impl MetricsServer {
 
     fn serve<A>(config: tiny_http::ServerConfig<A>) -> Self
     where
-        A: std::net::ToSocketAddrs,
+        A: ToSocketAddrs,
     {
         // Create an Arc of the shared data.
         let shared = Arc::new(MetricsServerShared {

@@ -16,15 +16,32 @@ This crate provides a thread safe, minimalstic HTTP server used to buffer metric
 Include the lib in your `Cargo.toml` dependencies:
 ```toml
 [dependencies]
-metrics_server = "0.3"
+metrics_server = "0.4"
 ```
 
-In your application:
+### HTTP
 ```rust
 use metrics_server::MetricsServer;
 
-// Create a new server and start listening for requests in the background.
+// Create a new HTTP server and start listening for requests in the background.
 let server = MetricsServer::new("localhost:8001");
+
+// Publish you application metrics.
+let bytes = server.update(Vec::from([1, 2, 3, 4]));
+assert_eq!(4, bytes);
+```
+
+### HTTPS
+Note: there is currently no option to skip TLS cert verification.
+```rust
+use metrics_server::MetricsServer;
+
+// Load TLS config.
+let cert = include_bytes!("/path/to/cert.pem").to_vec();
+let key = include_bytes!("/path/to/key.pem").to_vec();
+
+// Create a new HTTPS server and start listening for requests in the background.
+let server = MetricsServer::https("localhost:8443", cert, key);
 
 // Publish you application metrics.
 let bytes = server.update(Vec::from([1, 2, 3, 4]));
