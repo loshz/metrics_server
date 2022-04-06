@@ -6,9 +6,9 @@
 
 >_Note: this lib is **NOT** stable. The API might change before v1.0_
 
-A hassle-free, single-responsibility, safe HTTP server used to easily expose metrics in an application.
+A hassle-free, single-responsibility, safe HTTP/S server used to easily expose metrics in an application.
 
-This crate provides a thread safe, minimalstic HTTP server used to buffer metrics and serve them via a standard `/metrics` endpoint. It's aim is to remove the boilerplate needed to create such simple mechanisms. It is currently somewhat oppinionated and naive in order to maintain little complexity.
+This crate provides a thread safe, minimalstic HTTP/S server used to buffer metrics and serve them via a standard `/metrics` endpoint. It's aim is to remove the boilerplate needed to create such simple mechanisms. It is currently somewhat oppinionated and naive in order to maintain little complexity.
 
 
 ## Usage
