@@ -93,16 +93,16 @@ impl MetricsServer {
                         break;
                     }
 
-                    // Only respond to GET requests.
-                    if req.method() != &Method::Get {
-                        let res = Response::empty(405);
+                    // Only serve the /metrics path.
+                    if req.url() != "/metrics" {
+                        let res = Response::empty(404);
                         let _ = req.respond(res);
                         continue;
                     }
 
-                    // Only serve the /metrics path.
-                    if req.url() != "/metrics" {
-                        let res = Response::empty(404);
+                    // Only respond to GET requests.
+                    if req.method() != &Method::Get {
+                        let res = Response::empty(405);
                         let _ = req.respond(res);
                         continue;
                     }
