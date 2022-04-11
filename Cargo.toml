@@ -16,6 +16,7 @@ include = ["src/**/*", "tests", "examples", "LICENSE", "README.md"]
 
 [dependencies]
 tiny_http = { version = "0.11", features = ["ssl-rustls"] }
+log = "0.4"
 
 [dev-dependencies]
 prometheus-client = "0.15"
