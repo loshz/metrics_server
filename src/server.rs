@@ -3,6 +3,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+use log::{debug, error};
 use tiny_http::{Method, Response, Server};
 
 /// A thread-safe datastore for serving metrics via a HTTP/S server.
@@ -93,17 +94,28 @@ impl MetricsServer {
                         break;
                     }
 
+                    debug!(
+                        "metrics_server: request received [url: {}, remote addr: {}, http version: {}]",
+                        req.url(),
+                        req.remote_addr(),
+                        req.http_version(),
+                    );
+
                     // Only serve the /metrics path.
                     if req.url() != "/metrics" {
                         let res = Response::empty(404);
-                        let _ = req.respond(res);
+                        if let Err(e) = req.respond(res) {
+                            error!("metrics_server error: {}", e);
+                        };
                         continue;
                     }
 
                     // Only respond to GET requests.
                     if req.method() != &Method::Get {
                         let res = Response::empty(405);
-                        let _ = req.respond(res);
+                        if let Err(e) = req.respond(res) {
+                            error!("metrics_server error: {}", e);
+                        };
                         continue;
                     }
 
@@ -111,7 +123,7 @@ impl MetricsServer {
                     let metrics = s.data.lock().unwrap();
                     let res = Response::from_data(metrics.as_slice());
                     if let Err(e) = req.respond(res) {
-                        eprintln!("metrics_server error: {}", e);
+                        error!("metrics_server error: {}", e);
                     };
                 }
             }

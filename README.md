@@ -16,7 +16,7 @@ This crate provides a thread safe, minimalstic HTTP/S server used to buffer metr
 Include the lib in your `Cargo.toml` dependencies:
 ```toml
 [dependencies]
-metrics_server = "0.4"
+metrics_server = "0.5"
 ```
 
 ### HTTP
