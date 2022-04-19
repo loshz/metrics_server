@@ -2,13 +2,33 @@ use metrics_server::MetricsServer;
 
 #[test]
 #[should_panic]
+fn test_new_server_invalid_address() {
+    let _ = MetricsServer::new("invalid:99999999", None, None);
+}
+
+#[test]
+fn test_new_http_server_serve() {
+    let _ = MetricsServer::new("localhost:8001", None, None);
+}
+
+#[test]
+fn test_new_https_server_serve() {
+    // Load TLS config.
+    let cert = include_bytes!("./certs/certificate.pem").to_vec();
+    let key = include_bytes!("./certs/private_key.pem").to_vec();
+
+    let _ = MetricsServer::new("localhost:8443", Some(cert), Some(key));
+}
+
+#[test]
+#[should_panic]
 fn test_http_server_invalid_address() {
-    let _ = MetricsServer::new("invalid:99999999");
+    let _ = MetricsServer::http("invalid:99999999");
 }
 
 #[test]
 fn test_http_server_serve() {
-    let server = MetricsServer::new("localhost:8001");
+    let server = MetricsServer::http("localhost:8001");
 
     // Assert calls to non /metrics endpoint returns 404.
     let res = reqwest::blocking::get("http://localhost:8001/invalid").unwrap();

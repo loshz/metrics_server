@@ -13,7 +13,7 @@
 //! use metrics_server::MetricsServer;
 //!
 //! // Create a new HTTP server and start listening for requests in the background.
-//! let server = MetricsServer::new("localhost:8001");
+//! let server = MetricsServer::http("localhost:8001");
 //!
 //! // Publish your application metrics.
 //! let bytes = server.update(Vec::from([1, 2, 3, 4]));

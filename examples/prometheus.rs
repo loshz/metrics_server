@@ -16,7 +16,7 @@ fn main() {
     registry.register("some_count", "Number of random counts", counter.clone());
 
     // Expose the Prometheus metrics.
-    let server = MetricsServer::new("localhost:8001");
+    let server = MetricsServer::http("localhost:8001");
 
     // Increment the counter every 5 seconds.
     loop {

@@ -16,7 +16,7 @@ This crate provides a thread safe, minimalstic HTTP/S server used to buffer metr
 Include the lib in your `Cargo.toml` dependencies:
 ```toml
 [dependencies]
-metrics_server = "0.5"
+metrics_server = "0.6"
 ```
 
 ### HTTP
@@ -24,7 +24,7 @@ metrics_server = "0.5"
 use metrics_server::MetricsServer;
 
 // Create a new HTTP server and start listening for requests in the background.
-let server = MetricsServer::new("localhost:8001");
+let server = MetricsServer::http("localhost:8001");
 
 // Publish you application metrics.
 let bytes = server.update(Vec::from([1, 2, 3, 4]));

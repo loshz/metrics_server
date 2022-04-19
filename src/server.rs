@@ -19,14 +19,31 @@ struct MetricsServerShared {
 }
 
 impl MetricsServer {
-    /// Creates an empty `MetricsServer` and starts a HTTP server on a new thread at the given address.
+    /// Creates an empty `MetricsServer` and starts a HTTP/S server on a new thread at the given address.
     ///
     /// This server will only respond synchronously as it blocks until receiving new requests.
     ///
     /// # Panics
     ///
     /// Panics if given an invalid address.
-    pub fn new<A>(addr: A) -> Self
+    pub fn new<A>(addr: A, certificate: Option<Vec<u8>>, private_key: Option<Vec<u8>>) -> Self
+    where
+        A: ToSocketAddrs,
+    {
+        match (certificate, private_key) {
+            (Some(cert), Some(key)) => MetricsServer::https(addr, cert, key),
+            _ => MetricsServer::http(addr),
+        }
+    }
+
+    /// Shortcut for creating an empty `MetricsServer` and starting a HTTP server on a new thread at the given address.
+    ///
+    /// This server will only respond synchronously as it blocks until receiving new requests.
+    ///
+    /// # Panics
+    ///
+    /// Panics if given an invalid address.
+    pub fn http<A>(addr: A) -> Self
     where
         A: ToSocketAddrs,
     {
@@ -35,7 +52,7 @@ impl MetricsServer {
         MetricsServer::serve(config)
     }
 
-    /// Creates an empty `MetricsServer` and starts a HTTPS server on a new thread at the given address.
+    /// Shortcut for creating an empty `MetricsServer` and starting a HTTPS server on a new thread at the given address.
     ///
     /// This server will only respond synchronously as it blocks until receiving new requests.
     ///
