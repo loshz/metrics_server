@@ -18,7 +18,7 @@ ignore = []
 
 [licenses]
 # The lint level for crates which do not have a detectable license
-unlicensed = "warn"
+unlicensed = "deny"
 # List of explicitly allowed licenses
 allow = [
     "Apache-2.0",
@@ -31,7 +31,7 @@ allow = [
 deny = []
 
 # Lint level for licenses considered copyleft
-copyleft = "warn"
+copyleft = "deny"
 # Blanket approval or denial for OSI-approved or FSF Free/Libre licenses
 allow-osi-fsf-free = "neither"
 # Lint level used when no other predicates are matched
