@@ -12,7 +12,7 @@ repository = "https://github.com/loshz/metrics_server"
 license = "MIT"
 keywords = ["http", "prometheus", "metrics"]
 categories = ["web-programming::http-server"]
-include = ["src/**/*", "tests", "examples", "LICENSE", "README.md"]
+include = ["src/**/*", "tests", "examples", "Cargo.toml", "LICENSE", "README.md"]
 
 [dependencies]
 tiny_http = { version = "0.11", features = ["ssl-rustls"] }

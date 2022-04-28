@@ -1,28 +1,29 @@
 PUBLISH_FLAGS ?= --dry-run
 
-.PHONY: install-rust-tools
+.PHONY: install-rust-tools audit lint test publish gen-certs
+
 install-rust-tools:
 	rustup update
 	rustup component add rustfmt clippy
+	cargo install --locked cargo-deny
 
-.PHONY: lint
+audit:
+	cargo deny --locked check
+
 lint:
 	# Format files in the current crate using rustfmt
 	cargo fmt -- --check
 	# Check all packages and tests in the current crate and fail on warnings
 	cargo clippy --all --tests -- --no-deps -D warnings
 
-.PHONY: test
 test:
-	cargo test --no-fail-fast
+	cargo test --locked --no-fail-fast
 
-.PHONY: publish
 publish:
 	# https://doc.rust-lang.org/cargo/reference/publishing.html
 	cargo package --list
-	cargo publish ${PUBLISH_FLAGS}
+	cargo publish --locked ${PUBLISH_FLAGS}
 
-.PHONY: gen-certs
 gen-certs:
 	mkdir -p ./tests/certs
 	openssl genpkey -algorithm Ed25519 -out ./tests/certs/private_key.pem
