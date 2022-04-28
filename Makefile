@@ -8,7 +8,7 @@ install-rust-tools:
 	cargo install --locked cargo-deny
 
 audit:
-	cargo deny --locked check
+	cargo deny check
 
 lint:
 	# Format files in the current crate using rustfmt
@@ -17,12 +17,12 @@ lint:
 	cargo clippy --all --tests -- --no-deps -D warnings
 
 test:
-	cargo test --locked --no-fail-fast
+	cargo test --no-fail-fast
 
 publish:
 	# https://doc.rust-lang.org/cargo/reference/publishing.html
 	cargo package --list
-	cargo publish --locked ${PUBLISH_FLAGS}
+	cargo publish ${PUBLISH_FLAGS}
 
 gen-certs:
 	mkdir -p ./tests/certs
