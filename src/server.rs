@@ -19,9 +19,7 @@ struct MetricsServerShared {
 }
 
 impl MetricsServer {
-    /// Creates an empty `MetricsServer` and starts a HTTP/S server on a new thread at the given address.
-    ///
-    /// This server will only respond synchronously as it blocks until receiving new requests.
+    /// Creates an empty `MetricsServer` with a configured HTTP/S server.
     ///
     /// # Panics
     ///
@@ -30,15 +28,35 @@ impl MetricsServer {
     where
         A: ToSocketAddrs,
     {
-        match (certificate, private_key) {
-            (Some(cert), Some(key)) => MetricsServer::https(addr, cert, key),
-            _ => MetricsServer::http(addr),
+        // Parse TLS config.
+        let config = match (certificate, private_key) {
+            (Some(certificate), Some(private_key)) => tiny_http::ServerConfig {
+                addr,
+                ssl: Some(tiny_http::SslConfig {
+                    certificate,
+                    private_key,
+                }),
+            },
+            // Default to no TLS.
+            _ => tiny_http::ServerConfig { addr, ssl: None },
+        };
+
+        // Create an Arc of the shared data.
+        let shared = Arc::new(MetricsServerShared {
+            data: Mutex::new(Vec::new()),
+            server: Server::new(config).unwrap(),
+            stop: AtomicBool::new(false),
+        });
+
+        MetricsServer {
+            shared,
+            thread: None,
         }
     }
 
     /// Shortcut for creating an empty `MetricsServer` and starting a HTTP server on a new thread at the given address.
     ///
-    /// This server will only respond synchronously as it blocks until receiving new requests.
+    /// The server will only respond synchronously as it blocks until receiving new requests.
     ///
     /// # Panics
     ///
@@ -47,14 +65,12 @@ impl MetricsServer {
     where
         A: ToSocketAddrs,
     {
-        let config = tiny_http::ServerConfig { addr, ssl: None };
-
-        MetricsServer::serve(config)
+        MetricsServer::new(addr, None, None).serve()
     }
 
     /// Shortcut for creating an empty `MetricsServer` and starting a HTTPS server on a new thread at the given address.
     ///
-    /// This server will only respond synchronously as it blocks until receiving new requests.
+    /// The server will only respond synchronously as it blocks until receiving new requests.
     ///
     /// Note: there is currently no option to skip TLS cert verification.
     ///
@@ -65,44 +81,36 @@ impl MetricsServer {
     where
         A: ToSocketAddrs,
     {
-        let config = tiny_http::ServerConfig {
-            addr,
-            ssl: Some(tiny_http::SslConfig {
-                certificate,
-                private_key,
-            }),
-        };
-
-        MetricsServer::serve(config)
+        MetricsServer::new(addr, Some(certificate), Some(private_key)).serve()
     }
 
     /// Safely updates the data in a `MetricsServer` and returns the number of bytes written.
     ///
-    /// This method is protected by a mutex making it safe
-    /// to call concurrently from multiple threads.
+    /// This method is protected by a mutex making it safe to call concurrently from multiple threads.
     pub fn update(&self, data: Vec<u8>) -> usize {
         let mut buf = self.shared.data.lock().unwrap();
         *buf = data;
         buf.as_slice().len()
     }
 
-    fn serve<A>(config: tiny_http::ServerConfig<A>) -> Self
-    where
-        A: ToSocketAddrs,
-    {
-        // Create an Arc of the shared data.
-        let shared = Arc::new(MetricsServerShared {
-            data: Mutex::new(Vec::new()),
-            server: Server::new(config).unwrap(),
-            stop: AtomicBool::new(false),
-        });
+    /// Start serving requests on the underlying server.
+    ///
+    /// The server will only respond synchronously as it blocks until receiving new requests.
+    ///
+    /// # Panics
+    ///
+    /// Panics if called on a server that has already been started.
+    pub fn serve(mut self) -> Self {
+        if self.thread.is_some() {
+            panic!("metrics_server already started")
+        }
 
         // Invoking clone on Arc produces a new Arc instance, which points to the
         // same allocation on the heap as the source Arc, while increasing a reference count.
-        let s = Arc::clone(&shared);
+        let s = Arc::clone(&self.shared);
 
         // Handle requests in a new thread so we can process in the background.
-        let thread = Some(thread::spawn({
+        self.thread = Some(thread::spawn({
             move || {
                 // Blocks until the next request is received.
                 for req in s.server.incoming_requests() {
@@ -146,7 +154,7 @@ impl MetricsServer {
             }
         }));
 
-        MetricsServer { shared, thread }
+        self
     }
 }
 

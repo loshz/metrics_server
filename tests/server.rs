@@ -7,12 +7,32 @@ fn test_new_server_invalid_address() {
 }
 
 #[test]
-fn test_new_http_server_serve() {
+fn test_new_http_server() {
     let _ = MetricsServer::new("localhost:8001", None, None);
 }
 
 #[test]
-fn test_new_https_server_serve() {
+#[should_panic]
+fn test_new_server_invalid_cert() {
+    // Load TLS config.
+    let cert = Vec::new();
+    let key = include_bytes!("./certs/private_key.pem").to_vec();
+
+    let _ = MetricsServer::new("localhost:8441", Some(cert), Some(key));
+}
+
+#[test]
+#[should_panic]
+fn test_new_server_invalid_key() {
+    // Load TLS config.
+    let cert = include_bytes!("./certs/certificate.pem").to_vec();
+    let key = Vec::new();
+
+    let _ = MetricsServer::new("localhost:8442", Some(cert), Some(key));
+}
+
+#[test]
+fn test_new_https_server() {
     // Load TLS config.
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
     let key = include_bytes!("./certs/private_key.pem").to_vec();

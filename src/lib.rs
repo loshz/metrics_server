@@ -9,11 +9,30 @@
 //!
 //! # Examples
 //!
+//! Start a HTTP server:
+//!
 //! ```rust
 //! use metrics_server::MetricsServer;
 //!
 //! // Create a new HTTP server and start listening for requests in the background.
 //! let server = MetricsServer::http("localhost:8001");
+//!
+//! // Publish your application metrics.
+//! let bytes = server.update(Vec::from([1, 2, 3, 4]));
+//! assert_eq!(4, bytes);
+//! ```
+//!
+//! Start a HTTPS server:
+//!
+//! ```rust
+//! use metrics_server::MetricsServer;
+//!
+//! // Load TLS config.
+//! let cert = include_bytes!("/path/to/cert.pem").to_vec();
+//! let key = include_bytes!("/path/to/key.pem").to_vec();
+//!
+//! // Create a new HTTPS server and start listening for requests in the background.
+//! let server = MetricsServer::https("localhost:8443", cert, key);
 //!
 //! // Publish your application metrics.
 //! let bytes = server.update(Vec::from([1, 2, 3, 4]));

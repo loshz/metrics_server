@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  RUST_VERSION: 1.60
+  RUST_VERSION: 1.61
 
 jobs:
   lint:
