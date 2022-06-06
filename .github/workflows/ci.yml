@@ -19,9 +19,16 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_VERSION }}
-      - run: make install-rust-tools
-      - run: make audit
-      - run: make lint
+      # Install cargo plugins.
+      - run: |
+          rustup component add rustfmt clippy
+          cargo install --locked cargo-deny
+      # Run audit tools.
+      - run: cargo deny check
+      # Run linters.
+      - run: |
+          cargo fmt -- --check
+          cargo clippy --tests -- --no-deps -D warnings
 
   test:
     runs-on: ubuntu-latest
@@ -30,4 +37,4 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_VERSION }}
-      - run: make test
+      - run: cargo test --no-fail-fast
