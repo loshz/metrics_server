@@ -32,6 +32,15 @@ fn test_new_server_invalid_key() {
 }
 
 #[test]
+#[should_panic]
+fn test_new_server_already_running() {
+    let srv = MetricsServer::new("localhost:8002", None, None).serve();
+
+    // Attempt to start an already running server.
+    srv.serve();
+}
+
+#[test]
 fn test_new_https_server() {
     // Load TLS config.
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
