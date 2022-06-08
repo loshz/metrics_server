@@ -1,6 +1,6 @@
 [package]
 name = "metrics_server"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Dan Bond <danbond@protonmail.com>"]
 edition = "2021"
 rust-version = "1.58"
@@ -10,7 +10,7 @@ readme = "README.md"
 homepage = "https://github.com/loshz/metrics_server"
 repository = "https://github.com/loshz/metrics_server"
 license = "MIT"
-keywords = ["http", "prometheus", "metrics"]
+keywords = ["http", "server", "metrics"]
 categories = ["web-programming::http-server"]
 include = ["src/**/*", "tests", "examples", "Cargo.toml", "LICENSE", "README.md"]
 
@@ -18,9 +18,13 @@ include = ["src/**/*", "tests", "examples", "Cargo.toml", "LICENSE", "README.md"
 doctest = false
 
 [dependencies]
-tiny_http = { version = "0.11", features = ["ssl-rustls"] }
+tiny_http = "0.11"
 log = "0.4"
 
 [dev-dependencies]
 prometheus-client = "0.16"
 reqwest = { version = "0.11", features = ["blocking"] }
+
+[features]
+default = []
+tls = ["tiny_http/ssl-rustls"]

@@ -30,6 +30,7 @@ impl MetricsServer {
     {
         // Parse TLS config.
         let config = match (certificate, private_key) {
+            #[cfg(feature = "tls")]
             (Some(certificate), Some(private_key)) => tiny_http::ServerConfig {
                 addr,
                 ssl: Some(tiny_http::SslConfig {
@@ -77,6 +78,7 @@ impl MetricsServer {
     /// # Panics
     ///
     /// Panics if given an invalid address or incorrect TLS credentials.
+    #[cfg(feature = "tls")]
     pub fn https<A>(addr: A, certificate: Vec<u8>, private_key: Vec<u8>) -> Self
     where
         A: ToSocketAddrs,

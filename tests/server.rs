@@ -13,6 +13,7 @@ fn test_new_http_server() {
 
 #[test]
 #[should_panic]
+#[cfg(feature = "tls")]
 fn test_new_server_invalid_cert() {
     // Load TLS config.
     let cert = Vec::new();
@@ -23,6 +24,7 @@ fn test_new_server_invalid_cert() {
 
 #[test]
 #[should_panic]
+#[cfg(feature = "tls")]
 fn test_new_server_invalid_key() {
     // Load TLS config.
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
@@ -88,6 +90,7 @@ fn test_http_server_serve() {
 
 #[test]
 #[should_panic]
+#[cfg(feature = "tls")]
 fn test_https_server_invalid_address() {
     // Load TLS config.
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
@@ -98,6 +101,7 @@ fn test_https_server_invalid_address() {
 
 #[test]
 #[should_panic]
+#[cfg(feature = "tls")]
 fn test_https_server_invalid_cert() {
     // Load TLS config.
     let cert = Vec::new();
@@ -108,6 +112,7 @@ fn test_https_server_invalid_cert() {
 
 #[test]
 #[should_panic]
+#[cfg(feature = "tls")]
 fn test_https_server_invalid_key() {
     // Load TLS config.
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
@@ -117,6 +122,7 @@ fn test_https_server_invalid_key() {
 }
 
 #[test]
+#[cfg(feature = "tls")]
 fn test_https_server_serve() {
     // Load TLS config.
     let cert = include_bytes!("./certs/certificate.pem").to_vec();

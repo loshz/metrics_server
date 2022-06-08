@@ -37,4 +37,4 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_VERSION }}
-      - run: cargo test --no-fail-fast
+      - run: cargo test --no-fail-fast --all-features
