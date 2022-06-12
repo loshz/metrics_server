@@ -34,11 +34,11 @@ fn test_new_server_invalid_key() {
 }
 
 #[test]
-#[should_panic]
 fn test_new_server_already_running() {
     let srv = MetricsServer::new("localhost:8002", None, None).serve();
 
-    // Attempt to start an already running server.
+    // Attempt to start an already running server should be ok
+    // as we will return the pre-existing thread.
     srv.serve();
 }
 

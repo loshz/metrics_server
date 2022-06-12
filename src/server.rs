@@ -23,7 +23,7 @@ impl MetricsServer {
     ///
     /// # Panics
     ///
-    /// Panics if given an invalid address.
+    /// Panics if given an invalid address or incorrect TLS credentials.
     pub fn new<A>(addr: A, certificate: Option<Vec<u8>>, private_key: Option<Vec<u8>>) -> Self
     where
         A: ToSocketAddrs,
@@ -98,13 +98,12 @@ impl MetricsServer {
     /// Start serving requests on the underlying server.
     ///
     /// The server will only respond synchronously as it blocks until receiving new requests.
-    ///
-    /// # Panics
-    ///
-    /// Panics if called on a server that has already been started.
     pub fn serve(mut self) -> Self {
-        if self.thread.is_some() {
-            panic!("metrics_server already started")
+        // Check if we already have a thread running.
+        if let Some(thread) = &self.thread {
+            if !thread.is_finished() {
+                return self;
+            }
         }
 
         // Invoking clone on Arc produces a new Arc instance, which points to the
@@ -161,14 +160,14 @@ impl MetricsServer {
 }
 
 impl Drop for MetricsServer {
-    // TODO: should I really be doing this inside drop? It _could_ panic,
-    // so maybe a shutdown method would be better?
+    // TODO: should we really be doing this inside drop? It _could_ panic,
+    // so maybe a shutdown/stop method would be better?
     fn drop(&mut self) {
         // Signal that we should stop handling requests and unblock the server.
         self.shared.stop.store(true, Ordering::Relaxed);
         self.shared.server.unblock();
 
-        // Because join takes ownership of the thread, we need call the take method
+        // Because join takes ownership of the thread, we need to call the take method
         // on the Option to move the value out of the Some variant and leave a None
         // variant in its place.
         if let Some(thread) = self.thread.take() {
