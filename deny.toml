@@ -24,7 +24,6 @@ allow = [
     "Apache-2.0",
 	"BSD-3-Clause",
     "MIT",
-	"ISC",
 
 ]
 # List of explicitly disallowed licenses
@@ -41,7 +40,7 @@ confidence-threshold = 0.8
 # Allow 1 or more licenses on a per-crate basis, so that particular licenses
 # aren't accepted for every possible crate as with the normal allow list
 exceptions = [
-    { allow = ["ISC", "MIT", "OpenSSL"], name = "ring", version = "*" },
+    { allow = ["Unicode-DFS-2016"], name = "unicode-ident", version = "*" },
 ]
 
 [[licenses.clarify]]
