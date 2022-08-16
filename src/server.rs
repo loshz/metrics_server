@@ -3,6 +3,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+use crate::errors::ServerError;
+
 use log::{debug, error};
 use tiny_http::{Method, Response, Server};
 
@@ -20,11 +22,11 @@ struct MetricsServerShared {
 
 impl MetricsServer {
     /// Creates an empty `MetricsServer` with a configured HTTP/S server.
-    ///
-    /// # Panics
-    ///
-    /// Panics if given an invalid address or incorrect TLS credentials.
-    pub fn new<A>(addr: A, certificate: Option<Vec<u8>>, private_key: Option<Vec<u8>>) -> Self
+    pub fn new<A>(
+        addr: A,
+        certificate: Option<Vec<u8>>,
+        private_key: Option<Vec<u8>>,
+    ) -> Result<Self, ServerError>
     where
         A: ToSocketAddrs,
     {
@@ -42,17 +44,27 @@ impl MetricsServer {
             _ => tiny_http::ServerConfig { addr, ssl: None },
         };
 
+        // Attempt to create a new server.
+        let server = match Server::new(config) {
+            Ok(s) => s,
+            Err(err) => {
+                return Err(ServerError::new(
+                    format!("error creating metrics server: {}", err).as_str(),
+                ));
+            }
+        };
+
         // Create an Arc of the shared data.
         let shared = Arc::new(MetricsServerShared {
             data: Mutex::new(Vec::new()),
-            server: Server::new(config).unwrap(),
+            server,
             stop: AtomicBool::new(false),
         });
 
-        MetricsServer {
+        Ok(MetricsServer {
             shared,
             thread: None,
-        }
+        })
     }
 
     /// Shortcut for creating an empty `MetricsServer` and starting a HTTP server on a new thread at the given address.
@@ -66,7 +78,7 @@ impl MetricsServer {
     where
         A: ToSocketAddrs,
     {
-        MetricsServer::new(addr, None, None).serve()
+        MetricsServer::new(addr, None, None).unwrap().serve()
     }
 
     /// Shortcut for creating an empty `MetricsServer` and starting a HTTPS server on a new thread at the given address.
@@ -83,7 +95,9 @@ impl MetricsServer {
     where
         A: ToSocketAddrs,
     {
-        MetricsServer::new(addr, Some(certificate), Some(private_key)).serve()
+        MetricsServer::new(addr, Some(certificate), Some(private_key))
+            .unwrap()
+            .serve()
     }
 
     /// Safely updates the data in a `MetricsServer` and returns the number of bytes written.

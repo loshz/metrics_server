@@ -1,7 +1,6 @@
 use metrics_server::MetricsServer;
 
 #[test]
-#[should_panic]
 fn test_new_server_invalid_address() {
     let _ = MetricsServer::new("invalid:99999999", None, None);
 }
@@ -12,30 +11,47 @@ fn test_new_http_server() {
 }
 
 #[test]
-#[should_panic]
 #[cfg(feature = "tls")]
-fn test_new_server_invalid_cert() {
+fn test_new_server_invalid_certificate() {
     // Load TLS config.
-    let cert = Vec::new();
+    let cert = "-----BEGIN CERTIFICATE-----
+invaid certificate
+-----END CERTIFICATE-----"
+        .as_bytes()
+        .to_vec();
     let key = include_bytes!("./certs/private_key.pem").to_vec();
 
-    let _ = MetricsServer::new("localhost:8441", Some(cert), Some(key));
+    let server = MetricsServer::new("localhost:8441", Some(cert), Some(key));
+    assert!(server.is_err());
+
+    if let Err(error) = server {
+        assert!(error.to_string().contains("error creating metrics server"))
+    }
 }
 
 #[test]
-#[should_panic]
 #[cfg(feature = "tls")]
-fn test_new_server_invalid_key() {
+fn test_new_server_invalid_private_key() {
     // Load TLS config.
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
-    let key = Vec::new();
+    let key = "-----BEGIN PRIVATE KEY-----
+-----END PRIVATE KEY-----"
+        .as_bytes()
+        .to_vec();
 
-    let _ = MetricsServer::new("localhost:8442", Some(cert), Some(key));
+    let server = MetricsServer::new("localhost:8442", Some(cert), Some(key));
+    assert!(server.is_err());
+
+    if let Err(error) = server {
+        assert!(error.to_string().contains("error creating metrics server"))
+    }
 }
 
 #[test]
 fn test_new_server_already_running() {
-    let srv = MetricsServer::new("localhost:8002", None, None).serve();
+    let srv = MetricsServer::new("localhost:8002", None, None)
+        .unwrap()
+        .serve();
 
     // Attempt to start an already running server should be ok
     // as we will return the pre-existing thread.
@@ -48,7 +64,8 @@ fn test_new_https_server() {
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
     let key = include_bytes!("./certs/private_key.pem").to_vec();
 
-    let _ = MetricsServer::new("localhost:8443", Some(cert), Some(key));
+    let server = MetricsServer::new("localhost:8443", Some(cert), Some(key));
+    assert!(server.is_ok());
 }
 
 #[test]
@@ -102,7 +119,7 @@ fn test_https_server_invalid_address() {
 #[test]
 #[should_panic]
 #[cfg(feature = "tls")]
-fn test_https_server_invalid_cert() {
+fn test_https_server_invalid_certificate() {
     // Load TLS config.
     let cert = Vec::new();
     let key = include_bytes!("./certs/private_key.pem").to_vec();
@@ -113,7 +130,7 @@ fn test_https_server_invalid_cert() {
 #[test]
 #[should_panic]
 #[cfg(feature = "tls")]
-fn test_https_server_invalid_key() {
+fn test_https_server_invalid_private_key() {
     // Load TLS config.
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
     let key = Vec::new();
