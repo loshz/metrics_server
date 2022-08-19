@@ -45,14 +45,7 @@ impl MetricsServer {
         };
 
         // Attempt to create a new server.
-        let server = match Server::new(config) {
-            Ok(s) => s,
-            Err(err) => {
-                return Err(ServerError::new(
-                    format!("error creating metrics server: {}", err).as_str(),
-                ));
-            }
-        };
+        let server = Server::new(config).map_err(|e| ServerError::Create(e.to_string()))?;
 
         // Create an Arc of the shared data.
         let shared = Arc::new(MetricsServerShared {

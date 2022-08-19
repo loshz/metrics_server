@@ -3,22 +3,16 @@ use std::fmt;
 
 /// The error type for MetricsServer operations.
 #[derive(Debug)]
-pub struct ServerError {
-    details: String,
-}
-
-impl ServerError {
-    /// Creates a new ServerError with additional details.
-    pub fn new(msg: &str) -> ServerError {
-        ServerError {
-            details: msg.to_string(),
-        }
-    }
+pub enum ServerError {
+    /// Represents an error while creating a new server.
+    Create(String),
 }
 
 impl fmt::Display for ServerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.details)
+        match self {
+            ServerError::Create(s) => write!(f, "error creating metrics server: {}", s),
+        }
     }
 }
 
