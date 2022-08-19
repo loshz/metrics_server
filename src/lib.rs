@@ -38,8 +38,8 @@
 //! let bytes = server.update(Vec::from([1, 2, 3, 4]));
 //! assert_eq!(4, bytes);
 //! ```
-mod errors;
+mod error;
 mod server;
 
-pub use errors::ServerError;
+pub use error::ServerError;
 pub use server::MetricsServer;

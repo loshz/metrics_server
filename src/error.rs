@@ -22,8 +22,4 @@ impl fmt::Display for ServerError {
     }
 }
 
-impl Error for ServerError {
-    fn description(&self) -> &str {
-        &self.details
-    }
-}
+impl Error for ServerError {}

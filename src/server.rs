@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use crate::errors::ServerError;
+use crate::error::ServerError;
 
 use log::{debug, error};
 use tiny_http::{Method, Response, Server};
