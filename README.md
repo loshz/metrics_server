@@ -16,13 +16,13 @@ This crate provides a thread safe, minimalstic HTTP/S server used to buffer metr
 Include the lib in your `Cargo.toml` dependencies:
 ```toml
 [dependencies]
-metrics_server = "0.9"
+metrics_server = "0.10"
 ```
 
 To enable TLS support, pass the optional feature flag:
 ```toml
 [dependencies]
-metrics_server = { version = "0.9", features = ["tls"] }
+metrics_server = { version = "0.10", features = ["tls"] }
 ```
 
 ### HTTP
@@ -35,6 +35,9 @@ let server = MetricsServer::http("localhost:8001");
 // Publish you application metrics.
 let bytes = server.update(Vec::from([1, 2, 3, 4]));
 assert_eq!(4, bytes);
+
+// Stop the server.
+server.stop().unwrap();
 ```
 
 ### HTTPS
@@ -52,6 +55,9 @@ let server = MetricsServer::https("localhost:8443", cert, key);
 // Publish you application metrics.
 let bytes = server.update(Vec::from([1, 2, 3, 4]));
 assert_eq!(4, bytes);
+
+// Stop the server.
+server.stop().unwrap();
 ```
 
 For more comprehensive usage, see the included [examples](./examples).

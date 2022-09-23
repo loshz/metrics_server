@@ -2,12 +2,14 @@ use metrics_server::MetricsServer;
 
 #[test]
 fn test_new_server_invalid_address() {
-    let _ = MetricsServer::new("invalid:99999999", None, None);
+    let server = MetricsServer::new("invalid:99999999", None, None);
+    assert!(server.is_err());
 }
 
 #[test]
 fn test_new_http_server() {
-    let _ = MetricsServer::new("localhost:8001", None, None);
+    let server = MetricsServer::new("localhost:8001", None, None);
+    assert!(server.is_ok());
 }
 
 #[test]
@@ -24,8 +26,8 @@ invaid certificate
     let server = MetricsServer::new("localhost:8441", Some(cert), Some(key));
     assert!(server.is_err());
 
-    if let Err(error) = server {
-        assert!(error.to_string().contains("error creating metrics server"))
+    if let Err(err) = server {
+        assert!(err.to_string().contains("error creating metrics server"));
     }
 }
 
@@ -42,20 +44,23 @@ fn test_new_server_invalid_private_key() {
     let server = MetricsServer::new("localhost:8442", Some(cert), Some(key));
     assert!(server.is_err());
 
-    if let Err(error) = server {
-        assert!(error.to_string().contains("error creating metrics server"))
+    if let Err(err) = server {
+        assert!(err.to_string().contains("error creating metrics server"));
     }
 }
 
 #[test]
 fn test_new_server_already_running() {
-    let srv = MetricsServer::new("localhost:8002", None, None)
+    let server = MetricsServer::new("localhost:8002", None, None)
         .unwrap()
         .serve();
 
     // Attempt to start an already running server should be ok
     // as we will return the pre-existing thread.
-    srv.serve();
+    let server = server.serve();
+
+    // Stop the server.
+    server.stop().unwrap();
 }
 
 #[test]
@@ -103,6 +108,9 @@ fn test_http_server_serve() {
         res.copy_to(&mut buf).unwrap();
         assert_eq!(v, buf);
     }
+
+    // Stop the server.
+    server.stop().unwrap();
 }
 
 #[test]
@@ -145,5 +153,8 @@ fn test_https_server_serve() {
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
     let key = include_bytes!("./certs/private_key.pem").to_vec();
 
-    let _ = MetricsServer::https("localhost:8443", cert, key);
+    let server = MetricsServer::https("localhost:8443", cert, key);
+
+    // Stop the server.
+    server.stop().unwrap();
 }

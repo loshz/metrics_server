@@ -164,12 +164,9 @@ impl MetricsServer {
 
         self
     }
-}
 
-impl Drop for MetricsServer {
-    // TODO: should we really be doing this inside drop? It _could_ panic,
-    // so maybe a shutdown/stop method would be better?
-    fn drop(&mut self) {
+    /// Stop serving requests and free thread resources.
+    pub fn stop(mut self) -> Result<(), ServerError> {
         // Signal that we should stop handling requests and unblock the server.
         self.shared.stop.store(true, Ordering::Relaxed);
         self.shared.server.unblock();
@@ -177,8 +174,16 @@ impl Drop for MetricsServer {
         // Because join takes ownership of the thread, we need to call the take method
         // on the Option to move the value out of the Some variant and leave a None
         // variant in its place.
-        if let Some(thread) = self.thread.take() {
-            thread.join().unwrap();
+        match self.thread.take() {
+            Some(thread) => thread.join().map_err(|e| {
+                let err = match e.downcast_ref::<String>() {
+                    Some(s) => s,
+                    None => "unknown",
+                };
+
+                ServerError::Stop(err.to_string())
+            }),
+            None => Ok(()),
         }
     }
 }
