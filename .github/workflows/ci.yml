@@ -16,6 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
       # Install cargo plugins.
       - run: cargo install --locked cargo-deny
       # Run audit tools.
