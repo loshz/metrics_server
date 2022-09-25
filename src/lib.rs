@@ -20,6 +20,9 @@
 //! // Publish your application metrics.
 //! let bytes = server.update(Vec::from([1, 2, 3, 4]));
 //! assert_eq!(4, bytes);
+//!
+//! // Stop the server.
+//! server.stop().unwrap();
 //! ```
 //!
 //! Start a HTTPS server:
@@ -37,6 +40,9 @@
 //! // Publish your application metrics.
 //! let bytes = server.update(Vec::from([1, 2, 3, 4]));
 //! assert_eq!(4, bytes);
+//!
+//! // Stop the server.
+//! server.stop().unwrap();
 //! ```
 mod error;
 mod server;
