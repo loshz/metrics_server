@@ -10,21 +10,14 @@ on:
     branches:
       - main
 
-env:
-  RUST_VERSION: 1.64
-
 jobs:
   test:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
       # Install cargo plugins.
-      - run: |
-          rustup component add rustfmt clippy
-          cargo install --locked cargo-deny
+      - run: cargo install --locked cargo-deny
       # Run audit tools.
       - run: cargo deny check
       # Run linters.
