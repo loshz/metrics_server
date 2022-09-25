@@ -17,11 +17,13 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
-      # Install cargo plugins.
-      - run: cargo install --locked cargo-deny
+          components: rustfmt, clippy
       # Run audit tools.
-      - run: cargo deny check
+      - run: |
+          cargo install --locked cargo-deny
+          cargo deny check
       # Run linters.
       - run: |
           cargo fmt -- --check
