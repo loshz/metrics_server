@@ -2,7 +2,7 @@ use std::error::Error;
 use std::fmt;
 
 /// The error type for MetricsServer operations.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub enum ServerError {
     /// Represents an error encountered while creating a new server.
     Create(String),

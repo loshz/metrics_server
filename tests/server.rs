@@ -1,9 +1,10 @@
-use metrics_server::MetricsServer;
+use metrics_server::{MetricsServer, ServerError};
 
 #[test]
 fn test_new_server_invalid_address() {
     let server = MetricsServer::new("invalid:99999999", None, None);
     assert!(server.is_err());
+    assert!(matches!(server, Err(ServerError::Create(_))));
 }
 
 #[test]
@@ -25,10 +26,7 @@ invaid certificate
 
     let server = MetricsServer::new("localhost:8441", Some(cert), Some(key));
     assert!(server.is_err());
-
-    if let Err(err) = server {
-        assert!(err.to_string().contains("error creating metrics server"));
-    }
+    assert!(matches!(server, Err(ServerError::Create(_))));
 }
 
 #[test]
@@ -43,10 +41,7 @@ fn test_new_server_invalid_private_key() {
 
     let server = MetricsServer::new("localhost:8442", Some(cert), Some(key));
     assert!(server.is_err());
-
-    if let Err(err) = server {
-        assert!(err.to_string().contains("error creating metrics server"));
-    }
+    assert!(matches!(server, Err(ServerError::Create(_))));
 }
 
 #[test]
@@ -76,7 +71,7 @@ fn test_new_https_server() {
 #[test]
 #[should_panic]
 fn test_http_server_invalid_address() {
-    let _ = MetricsServer::http("invalid:99999999");
+    _ = MetricsServer::http("invalid:99999999");
 }
 
 #[test]
@@ -121,7 +116,7 @@ fn test_https_server_invalid_address() {
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
     let key = include_bytes!("./certs/private_key.pem").to_vec();
 
-    let _ = MetricsServer::https("invalid:99999999", cert, key);
+    _ = MetricsServer::https("invalid:99999999", cert, key);
 }
 
 #[test]
@@ -132,7 +127,7 @@ fn test_https_server_invalid_certificate() {
     let cert = Vec::new();
     let key = include_bytes!("./certs/private_key.pem").to_vec();
 
-    let _ = MetricsServer::https("localhost:8441", cert, key);
+    _ = MetricsServer::https("localhost:8441", cert, key);
 }
 
 #[test]
@@ -143,7 +138,7 @@ fn test_https_server_invalid_private_key() {
     let cert = include_bytes!("./certs/certificate.pem").to_vec();
     let key = Vec::new();
 
-    let _ = MetricsServer::https("localhost:8442", cert, key);
+    _ = MetricsServer::https("localhost:8442", cert, key);
 }
 
 #[test]
