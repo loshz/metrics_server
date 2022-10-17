@@ -4,7 +4,7 @@
 [![Docs](https://docs.rs/metrics_server/badge.svg)](https://docs.rs/metrics_server)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/loshz/metrics_server/blob/main/LICENSE)
 
->**Note**: The lib's API might change before v1.0, it should **NOT** currently be considered stable.
+>**Note**: This lib's API should _**NOT**_ currently be considered stable - it might change before v1.
 
 A hassle-free, single-responsibility, safe HTTP/S server used to easily expose metrics in an application.
 
