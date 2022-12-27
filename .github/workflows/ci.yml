@@ -14,19 +14,18 @@ jobs:
   test:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          components: rustfmt, clippy
+          components: rustfmt, clippy, cargo-deny
+
       # Run audit tools.
-      - run: |
-          cargo install --locked cargo-deny
-          cargo deny check
+      - run: cargo deny check
+
       # Run linters.
       - run: |
           cargo fmt -- --check
           cargo clippy --tests -- --no-deps -D warnings
+
       # Run all tests.
       - run: cargo test --no-fail-fast --all-features

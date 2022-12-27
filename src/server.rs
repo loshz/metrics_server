@@ -3,10 +3,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use crate::error::ServerError;
-
 use log::{debug, error};
 use tiny_http::{Method, Response, Server};
+
+use crate::error::ServerError;
 
 /// A thread-safe datastore for serving metrics via a HTTP/S server.
 pub struct MetricsServer {
@@ -135,7 +135,7 @@ impl MetricsServer {
                     );
 
                     // Only serve the /metrics path.
-                    if req.url() != "/metrics" {
+                    if req.url().to_lowercase() != "/metrics" {
                         let res = Response::empty(404);
                         if let Err(e) = req.respond(res) {
                             error!("metrics_server error: {}", e);
