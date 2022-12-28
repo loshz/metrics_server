@@ -102,16 +102,26 @@ impl MetricsServer {
         buf.as_slice().len()
     }
 
-    /// Start serving requests on the underlying server.
+    /// Start serving requests to the /metrics URL on the underlying server.
     ///
     /// The server will only respond synchronously as it blocks until receiving new requests.
-    pub fn serve(mut self) -> Self {
+    pub fn serve(self) -> Self {
+        self.serve_url("/metrics".to_string())
+    }
+
+    /// Start serving requests to a specific URL on the underlying server.
+    ///
+    /// The server will only respond synchronously as it blocks until receiving new requests.
+    pub fn serve_url(mut self, mut url: String) -> Self {
         // Check if we already have a thread running.
         if let Some(thread) = &self.thread {
             if !thread.is_finished() {
                 return self;
             }
         }
+
+        // Ensure URL is valid.
+        url = parse_url(url);
 
         // Invoking clone on Arc produces a new Arc instance, which points to the
         // same allocation on the heap as the source Arc, while increasing a reference count.
@@ -135,7 +145,7 @@ impl MetricsServer {
                     );
 
                     // Only serve the /metrics path.
-                    if req.url().to_lowercase() != "/metrics" {
+                    if req.url().to_lowercase() != url {
                         let res = Response::empty(404);
                         if let Err(e) = req.respond(res) {
                             error!("metrics_server error: {}", e);
@@ -186,4 +196,15 @@ impl MetricsServer {
             None => Ok(()),
         }
     }
+}
+
+/// Naive URL parse that simply removes whitespace and prepends a "/" if not already present.
+fn parse_url(mut url: String) -> String {
+    url.retain(|c| !c.is_whitespace());
+
+    if !url.starts_with('/') {
+        url = format!("/{}", url);
+    }
+
+    url
 }
