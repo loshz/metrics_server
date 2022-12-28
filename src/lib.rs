@@ -48,4 +48,4 @@ mod error;
 mod server;
 
 pub use error::ServerError;
-pub use server::MetricsServer;
+pub use server::{MetricsServer, DEFAULT_METRICS_PATH};

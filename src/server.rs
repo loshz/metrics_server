@@ -8,6 +8,9 @@ use tiny_http::{Method, Response, Server};
 
 use crate::error::ServerError;
 
+/// The default metrics URL path of the server.
+pub const DEFAULT_METRICS_PATH: &str = "/metrics";
+
 /// A thread-safe datastore for serving metrics via a HTTP/S server.
 pub struct MetricsServer {
     shared: Arc<MetricsServerShared>,
@@ -106,7 +109,7 @@ impl MetricsServer {
     ///
     /// The server will only respond synchronously as it blocks until receiving new requests.
     pub fn serve(self) -> Self {
-        self.serve_url("/metrics".to_string())
+        self.serve_url(DEFAULT_METRICS_PATH.to_string())
     }
 
     /// Start serving requests to a specific URL on the underlying server.
