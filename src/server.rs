@@ -74,7 +74,9 @@ impl MetricsServer {
     where
         A: ToSocketAddrs,
     {
-        MetricsServer::new(addr, None, None).unwrap().serve()
+        let mut server = MetricsServer::new(addr, None, None).unwrap();
+        server.serve();
+        server
     }
 
     /// Shortcut for creating an empty `MetricsServer` and starting a HTTPS server on a new thread at the given address.
@@ -91,9 +93,9 @@ impl MetricsServer {
     where
         A: ToSocketAddrs,
     {
-        MetricsServer::new(addr, Some(certificate), Some(private_key))
-            .unwrap()
-            .serve()
+        let mut server = MetricsServer::new(addr, Some(certificate), Some(private_key)).unwrap();
+        server.serve();
+        server
     }
 
     /// Safely updates the data in a `MetricsServer` and returns the number of bytes written.
@@ -108,18 +110,18 @@ impl MetricsServer {
     /// Start serving requests to the /metrics URL on the underlying server.
     ///
     /// The server will only respond synchronously as it blocks until receiving new requests.
-    pub fn serve(self) -> Self {
+    pub fn serve(&mut self) {
         self.serve_url(DEFAULT_METRICS_PATH.to_string())
     }
 
     /// Start serving requests to a specific URL on the underlying server.
     ///
     /// The server will only respond synchronously as it blocks until receiving new requests.
-    pub fn serve_url(mut self, mut url: String) -> Self {
+    pub fn serve_url(&mut self, mut url: String) {
         // Check if we already have a thread running.
         if let Some(thread) = &self.thread {
             if !thread.is_finished() {
-                return self;
+                return;
             }
         }
 
@@ -174,8 +176,6 @@ impl MetricsServer {
                 }
             }
         }));
-
-        self
     }
 
     /// Stop serving requests and free thread resources.

@@ -46,13 +46,12 @@ fn test_new_server_invalid_private_key() {
 
 #[test]
 fn test_new_server_already_running() {
-    let server = MetricsServer::new("localhost:8002", None, None)
-        .unwrap()
-        .serve();
+    let mut server = MetricsServer::new("localhost:8002", None, None).unwrap();
 
     // Attempt to start an already running server should be ok
     // as we will return the pre-existing thread.
-    let server = server.serve();
+    server.serve();
+    server.serve();
 
     // Stop the server.
     server.stop().unwrap();
@@ -77,7 +76,7 @@ fn test_http_server_invalid_address() {
 #[test]
 fn test_http_server_serve() {
     let server = MetricsServer::http("localhost:8001");
-    //
+
     // Assert calls to non /metrics endpoint returns 404.
     let res = reqwest::blocking::get("http://localhost:8001/invalid").unwrap();
     assert_eq!(404, res.status());
@@ -111,6 +110,23 @@ fn test_http_server_serve() {
         res.copy_to(&mut buf).unwrap();
         assert_eq!(v, buf);
     }
+
+    // Stop the server.
+    server.stop().unwrap();
+}
+
+#[test]
+fn test_http_server_serve_url() {
+    let mut server = MetricsServer::new("localhost:8004", None, None).unwrap();
+    server.serve_url("/test".to_string());
+
+    // Assert calls to non /metrics endpoint returns 404.
+    let res = reqwest::blocking::get("http://localhost:8004/metrics").unwrap();
+    assert_eq!(404, res.status());
+
+    // Assert calls to /test returns 200.
+    let res = reqwest::blocking::get("http://localhost:8004/test").unwrap();
+    assert_eq!(200, res.status());
 
     // Stop the server.
     server.stop().unwrap();
