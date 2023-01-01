@@ -70,12 +70,13 @@ fn test_new_https_server() {
 #[test]
 #[should_panic]
 fn test_http_server_invalid_address() {
-    _ = MetricsServer::http("invalid:99999999");
+    let _ = MetricsServer::http("invalid:99999999");
 }
 
 #[test]
 fn test_http_server_serve() {
-    let server = MetricsServer::http("localhost:8001");
+    let mut server = MetricsServer::new("localhost:8001", None, None).unwrap();
+    server.serve();
 
     // Assert calls to non /metrics endpoint returns 404.
     let res = reqwest::blocking::get("http://localhost:8001/invalid").unwrap();
