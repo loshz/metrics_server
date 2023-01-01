@@ -107,16 +107,18 @@ impl MetricsServer {
         buf.as_slice().len()
     }
 
-    /// Start serving requests to the /metrics URL on the underlying server.
+    /// Start serving requests to the /metrics URL path on the underlying server.
     ///
     /// The server will only respond synchronously as it blocks until receiving new requests.
+    /// Suqsequent calls to this method will return a no-op and not affect the underlying server.
     pub fn serve(&mut self) {
         self.serve_url(DEFAULT_METRICS_PATH.to_string())
     }
 
-    /// Start serving requests to a specific URL on the underlying server.
+    /// Start serving requests to a specific URL path on the underlying server.
     ///
     /// The server will only respond synchronously as it blocks until receiving new requests.
+    /// Suqsequent calls to this method will return a no-op and not affect the underlying server.
     pub fn serve_url(&mut self, mut url: String) {
         // Check if we already have a thread running.
         if let Some(thread) = &self.thread {
