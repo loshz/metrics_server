@@ -209,5 +209,22 @@ fn parse_url(mut url: String) -> String {
         url = format!("/{}", url);
     }
 
-    url
+    url.to_lowercase()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_url() {
+        let expected = DEFAULT_METRICS_PATH.to_string();
+
+        // No slash prefix.
+        assert_eq!(parse_url("metrics".to_string()), expected);
+        // Leading/trailing whitespace.
+        assert_eq!(parse_url(" metrics  ".to_string()), expected);
+        // Uppercase.
+        assert_eq!(parse_url("METRICS".to_string()), expected);
+    }
 }
