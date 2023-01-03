@@ -8,6 +8,9 @@ use tiny_http::{Method, Response, Server};
 
 use crate::error::ServerError;
 
+/// The default metrics URL path of the server.
+pub const DEFAULT_METRICS_PATH: &str = "/metrics";
+
 /// A thread-safe datastore for serving metrics via a HTTP/S server.
 pub struct MetricsServer {
     shared: Arc<MetricsServerShared>,
@@ -71,7 +74,9 @@ impl MetricsServer {
     where
         A: ToSocketAddrs,
     {
-        MetricsServer::new(addr, None, None).unwrap().serve()
+        let mut server = MetricsServer::new(addr, None, None).unwrap();
+        server.serve();
+        server
     }
 
     /// Shortcut for creating an empty `MetricsServer` and starting a HTTPS server on a new thread at the given address.
@@ -88,9 +93,9 @@ impl MetricsServer {
     where
         A: ToSocketAddrs,
     {
-        MetricsServer::new(addr, Some(certificate), Some(private_key))
-            .unwrap()
-            .serve()
+        let mut server = MetricsServer::new(addr, Some(certificate), Some(private_key)).unwrap();
+        server.serve();
+        server
     }
 
     /// Safely updates the data in a `MetricsServer` and returns the number of bytes written.
@@ -102,16 +107,28 @@ impl MetricsServer {
         buf.as_slice().len()
     }
 
-    /// Start serving requests on the underlying server.
+    /// Start serving requests to the /metrics URL path on the underlying server.
     ///
     /// The server will only respond synchronously as it blocks until receiving new requests.
-    pub fn serve(mut self) -> Self {
+    /// Suqsequent calls to this method will return a no-op and not affect the underlying server.
+    pub fn serve(&mut self) {
+        self.serve_url(DEFAULT_METRICS_PATH.to_string())
+    }
+
+    /// Start serving requests to a specific URL path on the underlying server.
+    ///
+    /// The server will only respond synchronously as it blocks until receiving new requests.
+    /// Suqsequent calls to this method will return a no-op and not affect the underlying server.
+    pub fn serve_url(&mut self, mut url: String) {
         // Check if we already have a thread running.
         if let Some(thread) = &self.thread {
             if !thread.is_finished() {
-                return self;
+                return;
             }
         }
+
+        // Ensure URL is valid.
+        url = parse_url(url);
 
         // Invoking clone on Arc produces a new Arc instance, which points to the
         // same allocation on the heap as the source Arc, while increasing a reference count.
@@ -135,7 +152,7 @@ impl MetricsServer {
                     );
 
                     // Only serve the /metrics path.
-                    if req.url().to_lowercase() != "/metrics" {
+                    if req.url().to_lowercase() != url {
                         let res = Response::empty(404);
                         if let Err(e) = req.respond(res) {
                             error!("metrics_server error: {}", e);
@@ -161,8 +178,6 @@ impl MetricsServer {
                 }
             }
         }));
-
-        self
     }
 
     /// Stop serving requests and free thread resources.
@@ -185,5 +200,33 @@ impl MetricsServer {
             }),
             None => Ok(()),
         }
+    }
+}
+
+/// Naive URL parse that simply removes whitespace and prepends a "/" if not already present.
+fn parse_url(mut url: String) -> String {
+    url.retain(|c| !c.is_whitespace());
+
+    if !url.starts_with('/') {
+        url = format!("/{}", url);
+    }
+
+    url.to_lowercase()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_url() {
+        let expected = DEFAULT_METRICS_PATH.to_string();
+
+        // No slash prefix.
+        assert_eq!(parse_url("metrics".to_string()), expected);
+        // Leading/trailing whitespace.
+        assert_eq!(parse_url(" metrics  ".to_string()), expected);
+        // Uppercase.
+        assert_eq!(parse_url("METRICS".to_string()), expected);
     }
 }
