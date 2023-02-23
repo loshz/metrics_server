@@ -16,13 +16,13 @@ This crate provides a thread safe, minimalstic HTTP/S server used to buffer metr
 Include the lib in your `Cargo.toml` dependencies:
 ```toml
 [dependencies]
-metrics_server = "0.11"
+metrics_server = "0.12"
 ```
 
 To enable TLS support, pass the optional feature flag:
 ```toml
 [dependencies]
-metrics_server = { version = "0.11", features = ["tls"] }
+metrics_server = { version = "0.12", features = ["tls"] }
 ```
 
 ### HTTP
@@ -33,8 +33,8 @@ use metrics_server::MetricsServer;
 let server = MetricsServer::http("localhost:8001");
 
 // Publish your application metrics.
-let bytes = server.update(Vec::from([1, 2, 3, 4]));
-assert_eq!(4, bytes);
+let bytes = server.update("my_awesome_metric = 10".into());
+assert_eq!(22, bytes);
 
 // Stop the server.
 server.stop().unwrap();
@@ -53,8 +53,8 @@ let key = include_bytes!("/path/to/key.pem").to_vec();
 let server = MetricsServer::https("localhost:8443", cert, key);
 
 // Publish your application metrics.
-let bytes = server.update(Vec::from([1, 2, 3, 4]));
-assert_eq!(4, bytes);
+let bytes = server.update("my_awesome_metric = 10".into());
+assert_eq!(22, bytes);
 
 // Stop the server.
 server.stop().unwrap();
@@ -69,8 +69,8 @@ let mut server = MetricsServer::new("localhost:8001", None, None);
 server.serve_url("/path/to/metrics");
 
 // Publish your application metrics.
-let bytes = server.update(Vec::from([1, 2, 3, 4]));
-assert_eq!(4, bytes);
+let bytes = server.update("my_awesome_metric = 10".into());
+assert_eq!(22, bytes);
 
 // Stop the server.
 server.stop().unwrap();

@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 
 use log::{debug, error};
-use tiny_http::{Method, Response, Server};
+use tiny_http::{ConfigListenAddr, Method, Response, Server};
 
 use crate::error::ServerError;
 
@@ -33,18 +33,25 @@ impl MetricsServer {
     where
         A: ToSocketAddrs,
     {
+        // Construct listener from address.
+        let listener = ConfigListenAddr::from_socket_addrs(addr)
+            .map_err(|e| ServerError::Create(e.to_string()))?;
+
         // Parse TLS config.
         let config = match (certificate, private_key) {
             #[cfg(feature = "tls")]
             (Some(certificate), Some(private_key)) => tiny_http::ServerConfig {
-                addr,
+                addr: listener,
                 ssl: Some(tiny_http::SslConfig {
                     certificate,
                     private_key,
                 }),
             },
             // Default to no TLS.
-            _ => tiny_http::ServerConfig { addr, ssl: None },
+            _ => tiny_http::ServerConfig {
+                addr: listener,
+                ssl: None,
+            },
         };
 
         // Attempt to create a new server.
@@ -145,9 +152,9 @@ impl MetricsServer {
                     }
 
                     debug!(
-                        "metrics_server: request received [url: {}, remote addr: {}, http version: {}]",
+                        "metrics_server: request received [url: '{}', remote_addr: '{}', http_version: '{}']",
                         req.url(),
-                        req.remote_addr(),
+                        req.remote_addr().map_or("N/A".to_string(), |v| v.to_string()),
                         req.http_version(),
                     );
 
@@ -224,8 +231,10 @@ mod tests {
 
         // No slash prefix.
         assert_eq!(parse_url("metrics".to_string()), expected);
-        // Leading/trailing whitespace.
-        assert_eq!(parse_url(" metrics  ".to_string()), expected);
+        // Leading slash prefix.
+        assert_eq!(parse_url("/metrics".to_string()), expected);
+        // Whitespace.
+        assert_eq!(parse_url(" metr ics  ".to_string()), expected);
         // Uppercase.
         assert_eq!(parse_url("METRICS".to_string()), expected);
     }

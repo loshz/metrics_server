@@ -9,7 +9,7 @@
 //!
 //! # Examples
 //!
-//! Start a HTTP server:
+//! ## Start a HTTP server:
 //!
 //! ```rust
 //! use metrics_server::MetricsServer;
@@ -18,14 +18,14 @@
 //! let server = MetricsServer::http("localhost:8001");
 //!
 //! // Publish your application metrics.
-//! let bytes = server.update(Vec::from([1, 2, 3, 4]));
-//! assert_eq!(4, bytes);
+//! let bytes = server.update("my_awesome_metric = 10".into());
+//! assert_eq!(22, bytes);
 //!
 //! // Stop the server.
 //! server.stop().unwrap();
 //! ```
 //!
-//! Start a HTTPS server:
+//! ## Start a HTTPS server:
 //!
 //! ```rust
 //! use metrics_server::MetricsServer;
@@ -38,8 +38,25 @@
 //! let server = MetricsServer::https("localhost:8443", cert, key);
 //!
 //! // Publish your application metrics.
-//! let bytes = server.update(Vec::from([1, 2, 3, 4]));
-//! assert_eq!(4, bytes);
+//! let bytes = server.update("my_awesome_metric = 10".into());
+//! assert_eq!(22, bytes);
+//!
+//! // Stop the server.
+//! server.stop().unwrap();
+//! ```
+//!
+//! ## Serve a custom URL
+//!
+//! ```rust
+//! use metrics_server::MetricsServer;
+//!
+//! // Create a new server and specify the URL path to serve.
+//! let mut server = MetricsServer::new("localhost:8001", None, None);
+//! server.serve_url("/path/to/metrics");
+//!
+//! // Publish your application metrics.
+//! let bytes = server.update("my_awesome_metric = 10".into());
+//! assert_eq!(22, bytes);
 //!
 //! // Stop the server.
 //! server.stop().unwrap();

@@ -13,6 +13,7 @@ fn main() {
     let stop = Arc::new(AtomicBool::new(false));
     let s = stop.clone();
     ctrlc::set_handler(move || {
+        println!("Stopping...");
         s.store(true, Ordering::Relaxed);
     })
     .unwrap();
@@ -38,11 +39,11 @@ fn main() {
                 counter.inc();
 
                 // Encode the current Registry in Prometheus format.
-                let mut encoded = Vec::new();
+                let mut encoded = String::new();
                 encode(&mut encoded, &registry).unwrap();
 
                 // Update the Metrics Server with the current encoded data.
-                server.update(encoded);
+                server.update(encoded.into());
 
                 thread::sleep(time::Duration::from_secs(5));
             }
