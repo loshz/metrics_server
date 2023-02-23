@@ -26,3 +26,9 @@ jobs:
 
       # Run all tests.
       - run: cargo test --no-fail-fast --all-features
+
+  audit:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+    - uses: EmbarkStudios/cargo-deny-action@v1

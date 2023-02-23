@@ -211,6 +211,7 @@ impl MetricsServer {
 }
 
 /// Naive URL parse that simply removes whitespace and prepends a "/" if not already present.
+/// TODO: use a url parsing lib?
 fn parse_url(mut url: String) -> String {
     url.retain(|c| !c.is_whitespace());
 
