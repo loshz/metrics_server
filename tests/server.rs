@@ -117,9 +117,9 @@ fn test_http_server_serve() {
 }
 
 #[test]
-fn test_http_server_serve_url() {
+fn test_http_server_serve_uri() {
     let mut server = MetricsServer::new("localhost:8004", None, None).unwrap();
-    server.serve_url("/test".to_string());
+    server.serve_uri("/test".to_string());
 
     // Assert calls to non /metrics endpoint returns 404.
     let res = reqwest::blocking::get("http://localhost:8004/metrics").unwrap();

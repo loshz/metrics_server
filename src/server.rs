@@ -1,8 +1,10 @@
 use std::net::ToSocketAddrs;
+use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+use http::Uri;
 use log::{debug, error};
 use tiny_http::{ConfigListenAddr, Method, Response, Server};
 
@@ -119,14 +121,14 @@ impl MetricsServer {
     /// The server will only respond synchronously as it blocks until receiving new requests.
     /// Suqsequent calls to this method will return a no-op and not affect the underlying server.
     pub fn serve(&mut self) {
-        self.serve_url(DEFAULT_METRICS_PATH.to_string())
+        self.serve_uri(DEFAULT_METRICS_PATH.to_string())
     }
 
     /// Start serving requests to a specific URL path on the underlying server.
     ///
     /// The server will only respond synchronously as it blocks until receiving new requests.
     /// Suqsequent calls to this method will return a no-op and not affect the underlying server.
-    pub fn serve_url(&mut self, mut url: String) {
+    pub fn serve_uri(&mut self, uri: String) {
         // Check if we already have a thread running.
         if let Some(thread) = &self.thread {
             if !thread.is_finished() {
@@ -134,8 +136,8 @@ impl MetricsServer {
             }
         }
 
-        // Ensure URL is valid.
-        url = parse_url(url);
+        // Ensure URI is valid.
+        let u = parse_uri(uri);
 
         // Invoking clone on Arc produces a new Arc instance, which points to the
         // same allocation on the heap as the source Arc, while increasing a reference count.
@@ -158,8 +160,8 @@ impl MetricsServer {
                         req.http_version(),
                     );
 
-                    // Only serve the /metrics path.
-                    if req.url().to_lowercase() != url {
+                    // Only serve the specified uri path.
+                    if req.url().to_lowercase() != u {
                         let res = Response::empty(404);
                         if let Err(e) = req.respond(res) {
                             error!("metrics_server error: {}", e);
@@ -210,16 +212,21 @@ impl MetricsServer {
     }
 }
 
-/// Naive URL parse that simply removes whitespace and prepends a "/" if not already present.
-/// TODO: use a url parsing lib?
-fn parse_url(mut url: String) -> String {
-    url.retain(|c| !c.is_whitespace());
-
-    if !url.starts_with('/') {
-        url = format!("/{}", url);
+/// Validate the provided URI or return the default /metrics on error.
+fn parse_uri(mut uri: String) -> String {
+    if !uri.starts_with('/') {
+        uri = format!("/{}", uri);
     }
 
-    url.to_lowercase()
+    let u = match Uri::from_str(&uri) {
+        Ok(u) => u.path().to_string(),
+        Err(_) => {
+            error!("invalid uri, defaulting to {}", DEFAULT_METRICS_PATH);
+            return DEFAULT_METRICS_PATH.to_string();
+        }
+    };
+
+    u.to_lowercase()
 }
 
 #[cfg(test)]
@@ -227,16 +234,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_url() {
-        let expected = DEFAULT_METRICS_PATH.to_string();
+    fn test_parse_uri() {
+        let expected_default = DEFAULT_METRICS_PATH.to_string();
+        let expected_valid = "/v1/metrics".to_string();
 
+        // Invalid.
+        assert_eq!(parse_uri("Hello, World!".to_string()), expected_default);
         // No slash prefix.
-        assert_eq!(parse_url("metrics".to_string()), expected);
+        assert_eq!(parse_uri("metrics".to_string()), expected_default);
         // Leading slash prefix.
-        assert_eq!(parse_url("/metrics".to_string()), expected);
+        assert_eq!(parse_uri("/metrics".to_string()), expected_default);
         // Whitespace.
-        assert_eq!(parse_url(" metr ics  ".to_string()), expected);
+        assert_eq!(parse_uri(" metr ics  ".to_string()), expected_default);
         // Uppercase.
-        assert_eq!(parse_url("METRICS".to_string()), expected);
+        assert_eq!(parse_uri("METRICS".to_string()), expected_default);
+        // Valid.
+        assert_eq!(parse_uri("/v1/metrics".to_string()), expected_valid);
     }
 }

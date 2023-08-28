@@ -52,7 +52,7 @@
 //!
 //! // Create a new server and specify the URL path to serve.
 //! let mut server = MetricsServer::new("localhost:8001", None, None);
-//! server.serve_url("/path/to/metrics");
+//! server.serve_uri("/path/to/metrics");
 //!
 //! // Publish your application metrics.
 //! let bytes = server.update("my_awesome_metric = 10".into());
