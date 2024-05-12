@@ -6,6 +6,7 @@ use std::thread;
 
 use http::Uri;
 use log::{debug, error};
+use time::{format_description, OffsetDateTime};
 use tiny_http::{ConfigListenAddr, Method, Response, Server};
 
 use crate::error::ServerError;
@@ -15,11 +16,11 @@ pub const DEFAULT_METRICS_PATH: &str = "/metrics";
 
 /// A thread-safe datastore for serving metrics via a HTTP/S server.
 pub struct MetricsServer {
-    shared: Arc<MetricsServerShared>,
+    shared: Arc<SharedData>,
     thread: Option<thread::JoinHandle<()>>,
 }
 
-struct MetricsServerShared {
+struct SharedData {
     data: Mutex<Vec<u8>>,
     server: Server,
     stop: AtomicBool,
@@ -60,7 +61,7 @@ impl MetricsServer {
         let server = Server::new(config).map_err(|e| ServerError::Create(e.to_string()))?;
 
         // Create an Arc of the shared data.
-        let shared = Arc::new(MetricsServerShared {
+        let shared = Arc::new(SharedData {
             data: Mutex::new(Vec::new()),
             server,
             stop: AtomicBool::new(false),
@@ -107,13 +108,11 @@ impl MetricsServer {
         server
     }
 
-    /// Safely updates the data in a `MetricsServer` and returns the number of bytes written.
-    ///
-    /// This method is protected by a mutex making it safe to call concurrently from multiple threads.
+    /// Thread safe method for updating the data in a `MetricsServer`, returning the number of bytes written.
     pub fn update(&self, data: Vec<u8>) -> usize {
         let mut buf = self.shared.data.lock().unwrap();
         *buf = data;
-        buf.as_slice().len()
+        buf.len()
     }
 
     /// Start serving requests to the /metrics URL path on the underlying server.
@@ -153,37 +152,24 @@ impl MetricsServer {
                         break;
                     }
 
-                    debug!(
-                        "metrics_server: request received [url: '{}', remote_addr: '{}', http_version: '{}']",
-                        req.url(),
-                        req.remote_addr().map_or("N/A".to_string(), |v| v.to_string()),
-                        req.http_version(),
-                    );
-
                     // Only serve the specified uri path.
                     if req.url().to_lowercase() != u {
                         let res = Response::empty(404);
-                        if let Err(e) = req.respond(res) {
-                            error!("metrics_server error: {}", e);
-                        };
+                        respond(req, res);
                         continue;
                     }
 
                     // Only respond to GET requests.
                     if req.method() != &Method::Get {
                         let res = Response::empty(405);
-                        if let Err(e) = req.respond(res) {
-                            error!("metrics_server error: {}", e);
-                        };
+                        respond(req, res);
                         continue;
                     }
 
                     // Write the metrics to the response buffer.
                     let metrics = s.data.lock().unwrap();
                     let res = Response::from_data(metrics.as_slice());
-                    if let Err(e) = req.respond(res) {
-                        error!("metrics_server error: {}", e);
-                    };
+                    respond(req, res);
                 }
             }
         }));
@@ -212,10 +198,10 @@ impl MetricsServer {
     }
 }
 
-/// Validate the provided URI or return the default /metrics on error.
+// Validate the provided URI or return the default /metrics on error.
 fn parse_uri(mut uri: String) -> String {
     if !uri.starts_with('/') {
-        uri = format!("/{}", uri);
+        uri.insert(0, '/');
     }
 
     let u = match Uri::from_str(&uri) {
@@ -227,6 +213,30 @@ fn parse_uri(mut uri: String) -> String {
     };
 
     u.to_lowercase()
+}
+
+// Responds to a given request and logs in an Apache-like format.
+fn respond<D>(req: tiny_http::Request, res: tiny_http::Response<D>)
+where
+    D: std::io::Read,
+{
+    let datetime = OffsetDateTime::now_utc()
+        .format(&format_description::well_known::Rfc3339)
+        .unwrap_or_else(|_| "-".to_string());
+
+    debug!(
+        "{} [{}] \"{} {} HTTP/{}\" {}",
+        req.remote_addr().map_or("-".to_string(), |v| v.to_string()),
+        datetime,
+        req.method(),
+        req.url(),
+        req.http_version(),
+        res.status_code().0,
+    );
+
+    if let Err(e) = req.respond(res) {
+        error!("error sending metrics response: {e}");
+    };
 }
 
 #[cfg(test)]

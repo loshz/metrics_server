@@ -1,9 +1,9 @@
 [package]
 name = "metrics_server"
-version = "0.13.0"
+version = "0.14.0"
 authors = ["Dan Bond <danbond@protonmail.com>"]
 edition = "2021"
-rust-version = "1.58"
+rust-version = "1.63"
 description = "A hassle-free, single-responsibility, safe HTTP/S server used to easily expose metrics in an application."
 documentation = "https://docs.rs/metrics_server"
 readme = "README.md"
@@ -18,14 +18,16 @@ include = ["src/**/*", "tests", "examples", "Cargo.toml", "LICENSE", "README.md"
 doctest = false
 
 [dependencies]
+http = "1.1"
 log = "0.4"
 tiny_http = "0.12"
-http = "0.2"
+time = { version = "0.3", features = ["formatting"] }
 
 [dev-dependencies]
 ctrlc = { version = "3.4", features = ["termination"] }
-prometheus-client = "0.21"
-reqwest = { version = "0.11", features = ["blocking"] }
+env_logger = "0.11"
+prometheus-client = "0.22"
+reqwest = { version = "0.12", features = ["blocking"] }
 
 [features]
 default = []

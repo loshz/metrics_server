@@ -16,13 +16,13 @@ This crate provides a thread safe, minimalstic HTTP/S server used to buffer metr
 Include the lib in your `Cargo.toml` dependencies:
 ```toml
 [dependencies]
-metrics_server = "0.13"
+metrics_server = "0.14"
 ```
 
 To enable TLS support, pass the optional feature flag:
 ```toml
 [dependencies]
-metrics_server = { version = "0.13", features = ["tls"] }
+metrics_server = { version = "0.14", features = ["tls"] }
 ```
 
 ### HTTP
