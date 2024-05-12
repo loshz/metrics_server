@@ -1,3 +1,4 @@
+[graph]
 targets = []
 
 [advisories]
@@ -5,43 +6,24 @@ targets = []
 db-path = "~/.cargo/advisory-db"
 # The url(s) of the advisory databases to use
 db-urls = ["https://github.com/rustsec/advisory-db"]
-# The lint level for security vulnerabilities
-vulnerability = "deny"
-# The lint level for unmaintained crates
-unmaintained = "warn"
 # The lint level for crates that have been yanked from their source registry
 yanked = "deny"
-# The lint level for crates with security notices
-notice = "warn"
 # A list of advisory IDs to ignore
 ignore = []
 
 [licenses]
-# The lint level for crates which do not have a detectable license
-unlicensed = "deny"
 # List of explicitly allowed licenses
 allow = [
     "Apache-2.0",
-	"BSD-3-Clause",
     "MIT",
 
 ]
-# List of explicitly disallowed licenses
-deny = []
 
-# Lint level for licenses considered copyleft
-copyleft = "deny"
-# Blanket approval or denial for OSI-approved or FSF Free/Libre licenses
-allow-osi-fsf-free = "neither"
-# Lint level used when no other predicates are matched
-default = "deny"
 # The confidence threshold for detecting a license from license text
 confidence-threshold = 0.8
 # Allow 1 or more licenses on a per-crate basis, so that particular licenses
 # aren't accepted for every possible crate as with the normal allow list
-exceptions = [
-    { allow = ["Unicode-DFS-2016"], name = "unicode-ident", version = "*" },
-]
+exceptions = []
 
 [[licenses.clarify]]
 # The name of the crate the clarification applies to
