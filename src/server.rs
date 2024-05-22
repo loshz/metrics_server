@@ -204,15 +204,13 @@ fn parse_uri(mut uri: String) -> String {
         uri.insert(0, '/');
     }
 
-    let u = match Uri::from_str(&uri) {
-        Ok(u) => u.path().to_string(),
+    match Uri::from_str(&uri) {
+        Ok(u) => u.path().to_lowercase(),
         Err(_) => {
             error!("invalid uri, defaulting to {}", DEFAULT_METRICS_PATH);
-            return DEFAULT_METRICS_PATH.to_string();
+            DEFAULT_METRICS_PATH.to_string()
         }
-    };
-
-    u.to_lowercase()
+    }
 }
 
 // Responds to a given request and logs in an Apache-like format.
