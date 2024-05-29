@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use http::Uri;
+use http::uri::PathAndQuery;
 use log::{debug, error};
 use time::{format_description, OffsetDateTime};
 use tiny_http::{ConfigListenAddr, Method, Response, Server};
@@ -127,16 +127,17 @@ impl MetricsServer {
     ///
     /// The server will only respond synchronously as it blocks until receiving new requests.
     /// Suqsequent calls to this method will return a no-op and not affect the underlying server.
-    pub fn serve_uri(&mut self, uri: String) {
+    pub fn serve_uri(&mut self, path: String) {
         // Check if we already have a thread running.
         if let Some(thread) = &self.thread {
             if !thread.is_finished() {
+                debug!("metrics server already running, continuing");
                 return;
             }
         }
 
-        // Ensure URI is valid.
-        let u = parse_uri(uri);
+        // Ensure path is valid.
+        let path = parse_path(&path);
 
         // Invoking clone on Arc produces a new Arc instance, which points to the
         // same allocation on the heap as the source Arc, while increasing a reference count.
@@ -149,11 +150,12 @@ impl MetricsServer {
                 for req in s.server.incoming_requests() {
                     // Check to see if we should stop handling requests.
                     if s.stop.load(Ordering::Relaxed) {
-                        break;
+                        debug!("metrics server stopping");
+                        return;
                     }
 
-                    // Only serve the specified uri path.
-                    if req.url().to_lowercase() != u {
+                    // Only serve the specified URI path.
+                    if req.url() != path {
                         let res = Response::empty(404);
                         respond(req, res);
                         continue;
@@ -198,16 +200,18 @@ impl MetricsServer {
     }
 }
 
-// Validate the provided URI or return the default /metrics on error.
-fn parse_uri(mut uri: String) -> String {
-    if !uri.starts_with('/') {
-        uri.insert(0, '/');
-    }
-
-    match Uri::from_str(&uri) {
-        Ok(u) => u.path().to_lowercase(),
+// Validate the provided URL path, or return the default path on error.
+fn parse_path(uri: &str) -> String {
+    match PathAndQuery::from_str(uri) {
+        Ok(pq) => {
+            let mut path = pq.path().to_lowercase();
+            if !path.starts_with('/') {
+                path.insert(0, '/');
+            }
+            path
+        }
         Err(_) => {
-            error!("invalid uri, defaulting to {}", DEFAULT_METRICS_PATH);
+            error!("invalid uri, defaulting to {DEFAULT_METRICS_PATH}");
             DEFAULT_METRICS_PATH.to_string()
         }
     }
@@ -242,21 +246,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_uri() {
+    fn test_parse_path() {
         let expected_default = DEFAULT_METRICS_PATH.to_string();
-        let expected_valid = "/v1/metrics".to_string();
+        let expected_valid = "/debug/metrics".to_string();
 
         // Invalid.
-        assert_eq!(parse_uri("Hello, World!".to_string()), expected_default);
-        // No slash prefix.
-        assert_eq!(parse_uri("metrics".to_string()), expected_default);
-        // Leading slash prefix.
-        assert_eq!(parse_uri("/metrics".to_string()), expected_default);
+        assert_eq!(parse_path("Hello, World!"), expected_default);
         // Whitespace.
-        assert_eq!(parse_uri(" metr ics  ".to_string()), expected_default);
-        // Uppercase.
-        assert_eq!(parse_uri("METRICS".to_string()), expected_default);
+        assert_eq!(parse_path(" metr ics  "), expected_default);
+        // Non-ASCII.
+        assert_eq!(parse_path("mëtrîcs"), expected_default);
         // Valid.
-        assert_eq!(parse_uri("/v1/metrics".to_string()), expected_valid);
+        assert_eq!(parse_path("/debug/metrics"), expected_valid);
+        assert_eq!(parse_path("debug/metrics"), expected_valid);
+        assert_eq!(parse_path("DEBUG/METRICS"), expected_valid);
     }
 }

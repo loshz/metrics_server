@@ -86,9 +86,9 @@ fn test_http_server_serve() {
     let res = reqwest::blocking::get("http://localhost:8001/metricsssss").unwrap();
     assert_eq!(404, res.status());
 
-    // Assert calls to uppercase URLs returns 200.
+    // Assert calls to uppercase URLs returns 404.
     let res = reqwest::blocking::get("http://localhost:8001/METRICS").unwrap();
-    assert_eq!(200, res.status());
+    assert_eq!(404, res.status());
 
     // Assert non GET requests to /metrics endpoint returns 405.
     let client = reqwest::blocking::Client::new();
